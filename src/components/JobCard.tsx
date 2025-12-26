@@ -115,7 +115,7 @@ export function JobCard({ job, index }: JobCardProps) {
               {/* Job Details Grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-5">
                 {job.employmentType && (
-                  <div className="bg-surface rounded-xl p-3">
+                  <div className="bg-surface-light rounded-xl p-3">
                     <div className="flex items-center gap-2 text-text-dim text-xs mb-1">
                       <Briefcase className="w-3.5 h-3.5" />
                       Employment Type
@@ -124,7 +124,7 @@ export function JobCard({ job, index }: JobCardProps) {
                   </div>
                 )}
                 {job.location && (
-                  <div className="bg-surface rounded-xl p-3">
+                  <div className="bg-surface-light rounded-xl p-3">
                     <div className="flex items-center gap-2 text-text-dim text-xs mb-1">
                       <MapPin className="w-3.5 h-3.5" />
                       Location
@@ -133,7 +133,7 @@ export function JobCard({ job, index }: JobCardProps) {
                   </div>
                 )}
                 {job.salary && (
-                  <div className="bg-surface rounded-xl p-3">
+                  <div className="bg-surface-light rounded-xl p-3">
                     <div className="flex items-center gap-2 text-text-dim text-xs mb-1">
                       <DollarSign className="w-3.5 h-3.5" />
                       Salary
@@ -142,7 +142,7 @@ export function JobCard({ job, index }: JobCardProps) {
                   </div>
                 )}
                 {job.postedDate && (
-                  <div className="bg-surface rounded-xl p-3">
+                  <div className="bg-surface-light rounded-xl p-3">
                     <div className="flex items-center gap-2 text-text-dim text-xs mb-1">
                       <Calendar className="w-3.5 h-3.5" />
                       Posted
@@ -151,7 +151,7 @@ export function JobCard({ job, index }: JobCardProps) {
                   </div>
                 )}
                 {job.isRemote && (
-                  <div className="bg-surface rounded-xl p-3">
+                  <div className="bg-surface-light rounded-xl p-3">
                     <div className="flex items-center gap-2 text-text-dim text-xs mb-1">
                       <Globe className="w-3.5 h-3.5" />
                       Work Style
@@ -159,7 +159,7 @@ export function JobCard({ job, index }: JobCardProps) {
                     <p className="text-mint font-medium text-sm">Remote Available</p>
                   </div>
                 )}
-                <div className="bg-surface rounded-xl p-3">
+                <div className="bg-surface-light rounded-xl p-3">
                   <div className="flex items-center gap-2 text-text-dim text-xs mb-1">
                     <Users className="w-3.5 h-3.5" />
                     Company

@@ -32,7 +32,7 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       await handleFile(e.dataTransfer.files[0]);
     }
@@ -102,7 +102,7 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
       });
 
       const data = await response.json();
-      
+
       if (data.status === 'OK') {
         setAnalysis(data.data);
         onAnalysisComplete(data.data);
@@ -158,11 +158,10 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
             onDragOver={handleDrag}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${
-              dragActive 
-                ? 'border-accent bg-accent/10' 
-                : 'border-border hover:border-accent/50 hover:bg-surface/50'
-            }`}
+            className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${dragActive
+              ? 'border-accent bg-accent/10'
+              : 'border-border hover:border-accent/50 hover:bg-surface/50'
+              }`}
           >
             <input
               ref={fileInputRef}
@@ -190,7 +189,7 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
             value={cvText}
             onChange={(e) => setCvText(e.target.value)}
             placeholder="Paste your CV content here..."
-            className="w-full h-48 bg-surface border border-border rounded-2xl p-4 text-text placeholder:text-text-dim focus:border-accent transition-colors resize-none"
+            className="w-full h-48 bg-surface-light border border-border rounded-2xl p-4 text-text placeholder:text-text-dim focus:border-accent transition-colors resize-none"
           />
 
           {error && (
@@ -238,7 +237,7 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
             exit={{ opacity: 0, y: -20 }}
           >
             {/* Summary */}
-            <div className="bg-surface rounded-2xl p-5 mb-6">
+            <div className="bg-surface-light rounded-2xl p-5 mb-6">
               <p className="text-text-muted leading-relaxed">{analysis.summary}</p>
             </div>
 
@@ -249,7 +248,7 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
                 Extracted Search Criteria
               </h3>
               <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="bg-surface rounded-xl p-4">
+                <div className="bg-surface-light rounded-xl p-4">
                   <p className="text-text-dim text-sm mb-1">Job Titles</p>
                   <div className="flex flex-wrap gap-1">
                     {analysis.extractedCriteria.jobTitles.map((title) => (
@@ -257,11 +256,11 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
                     ))}
                   </div>
                 </div>
-                <div className="bg-surface rounded-xl p-4">
+                <div className="bg-surface-light rounded-xl p-4">
                   <p className="text-text-dim text-sm mb-1">Experience</p>
                   <p className="text-text font-medium">{analysis.extractedCriteria.yearsOfExperience} years</p>
                 </div>
-                <div className="bg-surface rounded-xl p-4">
+                <div className="bg-surface-light rounded-xl p-4">
                   <p className="text-text-dim text-sm mb-1">Locations</p>
                   <div className="flex flex-wrap gap-1">
                     {analysis.extractedCriteria.preferredLocations.map((loc) => (
@@ -269,7 +268,7 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
                     ))}
                   </div>
                 </div>
-                <div className="bg-surface rounded-xl p-4">
+                <div className="bg-surface-light rounded-xl p-4">
                   <p className="text-text-dim text-sm mb-1">Remote</p>
                   <p className="text-text font-medium">
                     {analysis.extractedCriteria.isRemotePreferred ? 'Yes' : 'No'}
@@ -299,7 +298,7 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="bg-surface rounded-xl p-4"
+                    className="bg-surface-light rounded-xl p-4"
                   >
                     <div className="flex items-start gap-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getPriorityColor(improvement.priority)}`}>

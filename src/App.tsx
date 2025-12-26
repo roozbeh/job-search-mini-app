@@ -12,11 +12,11 @@ const MAX_API_CALLS = 5;
 
 function App() {
   const [apiKey, setApiKey] = useState<string | null>(null);
-  
+
   const handleApiKeyChange = useCallback((key: string | null) => {
     setApiKey(key);
   }, []);
-  
+
   const [preferences, setPreferences] = useState<JobPreferences>({
     jobTitles: [],
     locations: [],
@@ -72,7 +72,7 @@ function App() {
     try {
       // Build search queries based on preferences
       const queries: string[] = [];
-      
+
       for (const title of preferences.jobTitles) {
         if (preferences.locations.length > 0) {
           for (const location of preferences.locations) {
@@ -111,12 +111,12 @@ function App() {
               id: job.job_id || job.id || Math.random().toString(36),
               title: job.job_title || job.title || 'Unknown Title',
               company: job.employer_name || job.company || 'Unknown Company',
-              location: job.job_city 
+              location: job.job_city
                 ? `${job.job_city}${job.job_state ? `, ${job.job_state}` : ''}${job.job_country ? `, ${job.job_country}` : ''}`
                 : job.location || 'Location not specified',
               salary: job.job_salary || job.salary_range || null,
               description: job.job_description || job.description || null,
-              postedDate: job.job_posted_at_datetime_utc 
+              postedDate: job.job_posted_at_datetime_utc
                 ? new Date(String(job.job_posted_at_datetime_utc)).toLocaleDateString()
                 : job.posted_date ? String(job.posted_date) : null,
               applicationUrl: job.job_apply_link || job.apply_link || job.url || null,
@@ -133,8 +133,8 @@ function App() {
 
       // Remove duplicates based on title + company
       const uniqueJobs = allJobs.filter((job, index, self) =>
-        index === self.findIndex(j => 
-          j.title.toLowerCase() === job.title.toLowerCase() && 
+        index === self.findIndex(j =>
+          j.title.toLowerCase() === job.title.toLowerCase() &&
           j.company.toLowerCase() === job.company.toLowerCase()
         )
       );
@@ -180,14 +180,14 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen relative noise-overlay">
+    <div className="min-h-screen relative">
       <Background />
-      
+
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <Header />
-        
+
         <ApiKeyInput onApiKeyChange={handleApiKeyChange} />
-        
+
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
           <PreferencesForm
             preferences={preferences}

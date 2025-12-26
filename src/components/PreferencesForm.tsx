@@ -12,13 +12,13 @@ interface PreferencesFormProps {
   hasApiKey: boolean;
 }
 
-export function PreferencesForm({ 
-  preferences, 
-  onUpdate, 
-  onSearch, 
+export function PreferencesForm({
+  preferences,
+  onUpdate,
+  onSearch,
   isSearching,
   apiCallsRemaining,
-  hasApiKey 
+  hasApiKey
 }: PreferencesFormProps) {
   const [newTitle, setNewTitle] = useState('');
   const [newLocation, setNewLocation] = useState('');
@@ -69,7 +69,7 @@ export function PreferencesForm({
             onChange={(e) => setNewTitle(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addJobTitle()}
             placeholder="e.g., Frontend Developer"
-            className="flex-1 bg-surface border border-border rounded-xl px-4 py-3 text-text placeholder:text-text-dim focus:border-accent transition-colors"
+            className="flex-1 bg-surface-light border border-border rounded-xl px-4 py-3 text-text placeholder:text-text-dim focus:border-accent transition-colors"
           />
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -111,7 +111,7 @@ export function PreferencesForm({
             onChange={(e) => setNewLocation(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addLocation()}
             placeholder="e.g., San Francisco, CA"
-            className="flex-1 bg-surface border border-border rounded-xl px-4 py-3 text-text placeholder:text-text-dim focus:border-accent transition-colors"
+            className="flex-1 bg-surface-light border border-border rounded-xl px-4 py-3 text-text placeholder:text-text-dim focus:border-accent transition-colors"
           />
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -173,7 +173,7 @@ export function PreferencesForm({
               value={preferences.salaryMin || ''}
               onChange={(e) => onUpdate({ ...preferences, salaryMin: e.target.value ? parseInt(e.target.value) : null })}
               placeholder="Min"
-              className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-text placeholder:text-text-dim focus:border-accent transition-colors"
+              className="w-full bg-surface-light border border-border rounded-xl px-4 py-3 text-text placeholder:text-text-dim focus:border-accent transition-colors"
             />
           </div>
           <span className="text-text-dim self-center">—</span>
@@ -183,7 +183,7 @@ export function PreferencesForm({
               value={preferences.salaryMax || ''}
               onChange={(e) => onUpdate({ ...preferences, salaryMax: e.target.value ? parseInt(e.target.value) : null })}
               placeholder="Max"
-              className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-text placeholder:text-text-dim focus:border-accent transition-colors"
+              className="w-full bg-surface-light border border-border rounded-xl px-4 py-3 text-text placeholder:text-text-dim focus:border-accent transition-colors"
             />
           </div>
         </div>

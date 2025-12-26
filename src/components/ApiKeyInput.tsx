@@ -19,7 +19,7 @@ export function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
-    
+
     const savedKey = localStorage.getItem(STORAGE_KEY);
     if (savedKey) {
       setApiKey(savedKey);
@@ -63,7 +63,7 @@ export function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
       transition={{ delay: 0.1 }}
       className="glass rounded-3xl p-6 mb-6"
     >
-      <div 
+      <div
         className="flex items-center justify-between cursor-pointer"
         onClick={() => !isSaved && setIsExpanded(!isExpanded)}
       >
@@ -81,7 +81,7 @@ export function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
             </p>
           </div>
         </div>
-        
+
         {isSaved && (
           <button
             type="button"
@@ -104,7 +104,7 @@ export function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
           >
             <div className="pt-5 space-y-4">
               {!isSaved && (
-                <div className="bg-surface rounded-xl p-4 flex items-start gap-3">
+                <div className="bg-surface-light rounded-xl p-4 flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
                   <div className="text-sm">
                     <p className="text-text-muted mb-2">
@@ -134,7 +134,7 @@ export function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
                   value={apiKey}
                   onChange={handleInputChange}
                   placeholder="agnic_tok_eyJhbGciOiJI..."
-                  className="w-full bg-surface border border-border rounded-xl px-4 py-3 pr-12 text-text placeholder:text-text-dim focus:border-accent transition-colors font-mono text-sm"
+                  className="w-full bg-surface-light border border-border rounded-xl px-4 py-3 pr-12 text-text placeholder:text-text-dim focus:border-accent transition-colors font-mono text-sm"
                 />
                 <button
                   type="button"
