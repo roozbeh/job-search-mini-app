@@ -77,7 +77,7 @@ export function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
               {isSaved && <Check className="w-4 h-4 text-success" />}
             </h3>
             <p className="text-text-dim text-sm">
-              {isSaved ? 'Connected to AgnicHub' : 'Required to search jobs'}
+              {isSaved ? 'Connected to AgnicPay' : 'Required to search jobs'}
             </p>
           </div>
         </div>
@@ -108,15 +108,20 @@ export function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
                   <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
                   <div className="text-sm">
                     <p className="text-text-muted mb-2">
-                      You need an API key from AgnicHub to search for jobs.
+                      You need an API key from AgnicPay to search for jobs and analyze your CV.
                     </p>
+                    <div className="space-y-1">
+                      <p className="text-text-dim text-xs">1. Register at AgnicPay.xyz</p>
+                      <p className="text-text-dim text-xs">2. Create a new connection in your Agnic Wallet</p>
+                      <p className="text-text-dim text-xs">3. Get your API key from your Agnic Wallet</p>
+                    </div>
                     <a
-                      href="https://www.agnichub.xyz/api-hub/job-search"
+                      href="https://agnicpay.xyz"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-accent hover:text-accent-light inline-flex items-center gap-1 transition-colors"
+                      className="text-accent hover:text-accent-light inline-flex items-center gap-1 transition-colors mt-2"
                     >
-                      Get your API key
+                      Go to AgnicPay.xyz
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   </div>

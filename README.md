@@ -24,7 +24,7 @@ AI-powered job search that understands your career goals. A beautiful, modern si
 
 ## Single API Key
 
-Both job search and AI-powered CV analysis use the same AgnicHub API key through the AgnicPay proxy. Users only need one API key for all features!
+Both job search and AI-powered CV analysis use the same AgnicPay API key. Users only need one API key from their Agnic Wallet for all features!
 
 ## Getting Started
 
@@ -32,7 +32,7 @@ Both job search and AI-powered CV analysis use the same AgnicHub API key through
 
 - Node.js 18+
 - npm or yarn
-- [AgnicHub API Key](https://www.agnichub.xyz/api-hub/job-search) - A single API key (starting with `agnic_tok_`) that works for both job search AND AI-powered CV analysis!
+- **AgnicPay API Key** - A single API key (starting with `agnic_tok_`) that works for both job search AND AI-powered CV analysis! Get it from your Agnic Wallet after registering at [AgnicPay.xyz](https://agnicpay.xyz)
 
 ### Installation
 
@@ -73,20 +73,24 @@ npm run dev
 
 ### API Key Setup
 
-The Job Search API key is entered directly in the UI and stored securely in your browser's localStorage:
+The API key is entered directly in the UI and stored securely in your browser's localStorage:
 
-1. Get your API key from [AgnicHub](https://www.agnichub.xyz/api-hub/job-search)
-2. Enter it in the "API Key" section at the top of the app
-3. Click "Save Key" - it will be remembered for future sessions
-4. The key is stored locally in your browser and never sent to our servers
+1. **Register** at [AgnicPay.xyz](https://agnicpay.xyz)
+2. **Create a new connection** in your Agnic Wallet
+3. **Get your API key** (starting with `agnic_tok_`) from your Agnic Wallet
+4. Enter it in the "API Key" section at the top of the app
+5. Click "Save Key" - it will be remembered for future sessions
+6. The key is stored locally in your browser and never sent to our servers
 
 ## How to Use
 
 ### Step 1: Enter Your API Key
 
-1. Get your API key from [AgnicHub](https://www.agnichub.xyz/api-hub/job-search)
-2. Paste it in the "API Key" input field
-3. Click "Save Key"
+1. **Register** at [AgnicPay.xyz](https://agnicpay.xyz) if you haven't already
+2. **Create a new connection** in your Agnic Wallet
+3. **Copy your API key** (starting with `agnic_tok_`) from your Agnic Wallet
+4. Paste it in the "API Key" input field in the app
+5. Click "Save Key"
 
 ### Step 2: Set Job Preferences
 
