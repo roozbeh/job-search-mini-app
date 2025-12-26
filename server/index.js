@@ -142,25 +142,50 @@ app.post('/api/cv/parse', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    console.log('File received:', {
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      originalname: req.file.originalname,
+    });
+
     let text = '';
 
-    if (req.file.mimetype === 'application/pdf') {
+    if (req.file.mimetype === 'application/pdf' || req.file.originalname?.endsWith('.pdf')) {
       // Parse PDF
-      const pdfData = await pdf(req.file.buffer);
-      text = pdfData.text;
-    } else if (req.file.mimetype === 'text/plain') {
+      try {
+        console.log('Attempting to parse PDF...');
+        const pdfData = await pdf(req.file.buffer);
+        text = pdfData.text || '';
+        console.log('PDF parsed successfully, text length:', text.length);
+      } catch (pdfError) {
+        console.error('PDF parsing error:', pdfError);
+        return res.status(500).json({ 
+          error: 'Failed to parse PDF file',
+          details: pdfError.message 
+        });
+      }
+    } else if (req.file.mimetype === 'text/plain' || req.file.originalname?.endsWith('.txt')) {
       // Parse TXT
       text = req.file.buffer.toString('utf-8');
+      console.log('TXT file parsed, text length:', text.length);
+    } else {
+      return res.status(400).json({ 
+        error: 'Unsupported file type. Please upload a PDF or TXT file.',
+        receivedMimeType: req.file.mimetype 
+      });
     }
 
     if (!text.trim()) {
-      return res.status(400).json({ error: 'Could not extract text from file' });
+      return res.status(400).json({ error: 'Could not extract text from file. The file might be empty or corrupted.' });
     }
 
     res.json({ status: 'OK', data: { text: text.trim() } });
   } catch (error) {
     console.error('File parse error:', error);
-    res.status(500).json({ error: 'Failed to parse file' });
+    res.status(500).json({ 
+      error: 'Failed to parse file',
+      details: error.message 
+    });
   }
 });
 

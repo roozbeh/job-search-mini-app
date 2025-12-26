@@ -50,3 +50,4 @@ export interface SearchState {
   error: string | null;
 }
 
+
