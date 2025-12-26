@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { Header } from './components/Header';
 import { ApiKeyInput } from './components/ApiKeyInput';
 import { PreferencesForm } from './components/PreferencesForm';
@@ -116,8 +116,8 @@ function App() {
               salary: job.job_salary || job.salary_range || null,
               description: job.job_description || job.description || null,
               postedDate: job.job_posted_at_datetime_utc 
-                ? new Date(job.job_posted_at_datetime_utc).toLocaleDateString()
-                : job.posted_date || null,
+                ? new Date(String(job.job_posted_at_datetime_utc)).toLocaleDateString()
+                : job.posted_date ? String(job.posted_date) : null,
               applicationUrl: job.job_apply_link || job.apply_link || job.url || null,
               companyLogo: job.employer_logo || job.company_logo || null,
               isRemote: job.job_is_remote || job.is_remote || false,
@@ -142,7 +142,9 @@ function App() {
       uniqueJobs.sort((a, b) => {
         if (!a.postedDate) return 1;
         if (!b.postedDate) return -1;
-        return new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime();
+        const dateA = new Date(a.postedDate).getTime();
+        const dateB = new Date(b.postedDate).getTime();
+        return dateB - dateA;
       });
 
       setSearchState(prev => ({
