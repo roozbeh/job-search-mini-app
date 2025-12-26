@@ -73,10 +73,17 @@ npm run dev
 
 ### Deploying to Render
 
-When deploying to Render or similar platforms:
+When deploying to Render:
+
+**Option 1: Using render.yaml (Recommended)**
+- The repository includes a `render.yaml` file that automatically configures the correct build and start commands
+- Just connect your GitHub repository to Render and it will use the configuration
+
+**Option 2: Manual Configuration**
+If not using render.yaml, configure these settings in Render dashboard:
 
 1. **Build Command**: `npm install && npm run build`
-2. **Start Command**: `npm start` (not `npm run dev`)
+2. **Start Command**: `npm start` ⚠️ **Important:** Change from `npm run dev` to `npm start` in Render settings
 3. The app will automatically use the `PORT` environment variable provided by Render
 4. Make sure to also deploy the backend server separately (in `server/` directory)
 
