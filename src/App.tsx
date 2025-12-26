@@ -5,6 +5,7 @@ import { PreferencesForm } from './components/PreferencesForm';
 import { CVUpload } from './components/CVUpload';
 import { JobResults } from './components/JobResults';
 import { Background } from './components/Background';
+import { getApiUrl } from './utils/api';
 import type { JobPreferences, Job, CVAnalysis, SearchState } from './types';
 
 const MAX_API_CALLS = 5;
@@ -97,7 +98,7 @@ function App() {
 
       for (const query of queriesToExecute) {
         try {
-          const response = await fetch('/api/jobs/search', {
+          const response = await fetch(getApiUrl('/api/jobs/search'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query, apiKey }),

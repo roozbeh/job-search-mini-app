@@ -7,4 +7,20 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: VITE_API_BASE_URL
+        sync: false  # Will be set manually to backend URL
 
+  - type: web
+    name: job-search-mini-app-backend
+    env: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        fromService:
+          type: web
+          name: job-search-mini-app-backend
+          property: port

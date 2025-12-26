@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Upload, FileText, Sparkles, X, Loader2 } from 'lucide-react';
+import { getApiUrl } from '../utils/api';
 import type { CVAnalysis, JobPreferences } from '../types';
 
 interface CVUploadProps {
@@ -60,7 +61,7 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/cv/parse', {
+      const response = await fetch(getApiUrl('/api/cv/parse'), {
         method: 'POST',
         body: formData,
       });
@@ -94,7 +95,7 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
     setError(null);
 
     try {
-      const response = await fetch('/api/cv/analyze', {
+      const response = await fetch(getApiUrl('/api/cv/analyze'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cvText, apiKey }),

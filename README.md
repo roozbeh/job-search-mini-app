@@ -73,19 +73,33 @@ npm run dev
 
 ### Deploying to Render
 
-When deploying to Render:
+The app consists of two services that need to be deployed separately:
 
-**Option 1: Using render.yaml (Recommended)**
-- The repository includes a `render.yaml` file that automatically configures the correct build and start commands
-- Just connect your GitHub repository to Render and it will use the configuration
+#### Frontend Deployment
 
-**Option 2: Manual Configuration**
-If not using render.yaml, configure these settings in Render dashboard:
+1. **Create a new Web Service** in Render
+2. **Connect your GitHub repository**
+3. **Settings:**
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm start` ⚠️ **Important:** Must be `npm start` (not `npm run dev`)
+   - **Environment Variable**: 
+     - Key: `VITE_API_BASE_URL`
+     - Value: `https://your-backend-service.onrender.com` (set this after deploying backend)
 
-1. **Build Command**: `npm install && npm run build`
-2. **Start Command**: `npm start` ⚠️ **Important:** Change from `npm run dev` to `npm start` in Render settings
-3. The app will automatically use the `PORT` environment variable provided by Render
-4. Make sure to also deploy the backend server separately (in `server/` directory)
+#### Backend Deployment
+
+1. **Create another Web Service** in Render
+2. **Settings:**
+   - **Root Directory**: `server`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Environment**: Node.js
+
+3. **After backend deploys**, copy its URL and update the frontend's `VITE_API_BASE_URL` environment variable
+
+#### Using render.yaml (Alternative)
+
+The repository includes a `render.yaml` file. If Render supports it, you can use it to deploy both services automatically. You'll still need to set the `VITE_API_BASE_URL` environment variable manually after deployment.
 
 ### API Key Setup
 
