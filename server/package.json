@@ -1,0 +1,16 @@
+{
+  "name": "job-search-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "multer": "^2.0.2",
+    "openai": "^4.52.0",
+    "pdf-parse": "^2.4.5"
+  }
+}
