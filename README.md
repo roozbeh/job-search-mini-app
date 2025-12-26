@@ -71,6 +71,15 @@ npm run dev
 
 3. Open [http://localhost:5173](http://localhost:5173) in your browser
 
+### Deploying to Render
+
+When deploying to Render or similar platforms:
+
+1. **Build Command**: `npm install && npm run build`
+2. **Start Command**: `npm start` (not `npm run dev`)
+3. The app will automatically use the `PORT` environment variable provided by Render
+4. Make sure to also deploy the backend server separately (in `server/` directory)
+
 ### API Key Setup
 
 The API key is entered directly in the UI and stored securely in your browser's localStorage:
