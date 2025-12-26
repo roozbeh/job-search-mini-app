@@ -114,7 +114,7 @@ function App() {
                 ? `${job.job_city}${job.job_state ? `, ${job.job_state}` : ''}${job.job_country ? `, ${job.job_country}` : ''}`
                 : job.location || 'Location not specified',
               salary: job.job_salary || job.salary_range || null,
-              description: job.job_description?.slice(0, 200) || job.description?.slice(0, 200) || null,
+              description: job.job_description || job.description || null,
               postedDate: job.job_posted_at_datetime_utc 
                 ? new Date(job.job_posted_at_datetime_utc).toLocaleDateString()
                 : job.posted_date || null,
