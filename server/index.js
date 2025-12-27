@@ -7,11 +7,8 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const pdfParseModule = require('pdf-parse');
 
-// pdf-parse exports PDFParse class, but also works as a function when called directly
-// Try to get the function directly or use the module as-is
-const pdf = typeof pdfParseModule === 'function' 
-  ? pdfParseModule 
-  : (pdfParseModule.default || pdfParseModule.PDFParse || pdfParseModule);
+// pdf-parse exports PDFParse as a function/class
+const pdf = pdfParseModule.PDFParse || pdfParseModule.default || pdfParseModule;
 
 const app = express();
 app.use(cors());
