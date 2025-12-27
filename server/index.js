@@ -35,6 +35,23 @@ const upload = multer({
 
 const PORT = process.env.PORT || 3001;
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    service: 'job-search-mini-app-backend'
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    service: 'job-search-mini-app-backend'
+  });
+});
+
 // Job Search API configuration - using AgnicPay proxy
 const AGNIC_PAY_BASE = 'https://api.agnicpay.xyz/api/x402/fetch';
 const JOB_SEARCH_API_BASE = 'https://api.agnichub.xyz/v1/custom/job-search';
