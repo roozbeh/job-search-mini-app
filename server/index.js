@@ -18,7 +18,9 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
     // Accept PDF and TXT files by mimetype or extension
+    // Some browsers send PDFs as application/octet-stream, so we check extension too
     const isPdf = file.mimetype === 'application/pdf' || 
+                  file.mimetype === 'application/octet-stream' ||
                   file.originalname?.toLowerCase().endsWith('.pdf');
     const isTxt = file.mimetype === 'text/plain' || 
                   file.originalname?.toLowerCase().endsWith('.txt');
@@ -157,7 +159,9 @@ app.post('/api/cv/parse', upload.single('file'), async (req, res) => {
 
     let text = '';
 
-    if (req.file.mimetype === 'application/pdf' || req.file.originalname?.endsWith('.pdf')) {
+    if (req.file.mimetype === 'application/pdf' || 
+        req.file.mimetype === 'application/octet-stream' ||
+        req.file.originalname?.endsWith('.pdf')) {
       // Parse PDF
       try {
         console.log('Attempting to parse PDF...');
