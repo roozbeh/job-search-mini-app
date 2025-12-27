@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Upload, FileText, Sparkles, X, Loader2 } from 'lucide-react';
+import { Upload, FileText, Sparkles, X, Loader2, FileCheck } from 'lucide-react';
 import { getApiUrl } from '../utils/api';
-import type { CVAnalysis, JobPreferences } from '../types';
+import type { CVAnalysis, JobPreferences, DetailedReview } from '../types';
+import { DetailedReviewModal } from './DetailedReviewModal';
 
 interface CVUploadProps {
   onAnalysisComplete: (analysis: CVAnalysis) => void;
@@ -16,6 +17,11 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
   const [analysis, setAnalysis] = useState<CVAnalysis | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [showDetailedReview, setShowDetailedReview] = useState(false);
+  const [isDetailedAnalyzing, setIsDetailedAnalyzing] = useState(false);
+  const [detailedReview, setDetailedReview] = useState<DetailedReview | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -134,6 +140,44 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
       case 'medium': return 'text-warning bg-warning/10';
       case 'low': return 'text-mint bg-mint/10';
       default: return 'text-text-muted bg-surface-light';
+    }
+  };
+
+  const generateDetailedReview = async () => {
+    if (!apiKey) {
+      setError('Please enter your API key first');
+      return;
+    }
+
+    setShowDetailedReview(true);
+
+    // If we already have the review, don't fetch again
+    if (detailedReview) return;
+
+    setIsDetailedAnalyzing(true);
+    try {
+      const response = await fetch(getApiUrl('/api/cv/detailed-review'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cvText, apiKey }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === 'OK') {
+        setDetailedReview(data.data);
+      } else {
+        // Show error in the modal or close it? 
+        // For now let's just log it and maybe set an error state in the modal if we had one
+        console.error(data.error);
+        setError(data.error || 'Failed to generate detailed review');
+        setShowDetailedReview(false);
+      }
+    } catch (err) {
+      setError('Network error during detailed review');
+      setShowDetailedReview(false);
+    } finally {
+      setIsDetailedAnalyzing(false);
     }
   };
 
@@ -279,9 +323,19 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={applyExtractedCriteria}
-                className="w-full bg-accent/20 hover:bg-accent/30 text-accent font-medium py-3 rounded-xl transition-colors"
+                className="w-full bg-accent/20 hover:bg-accent/30 text-accent font-medium py-3 rounded-xl transition-colors mb-3"
               >
                 Apply to Search Preferences
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={generateDetailedReview}
+                className="w-full bg-gradient-to-r from-mint to-teal-500 text-white font-medium py-3 rounded-xl transition-all shadow-lg shadow-mint/20 flex items-center justify-center gap-2"
+              >
+                <FileCheck className="w-5 h-5" />
+                Get Detailed Review & ATS Score
               </motion.button>
             </div>
 
@@ -324,6 +378,13 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey }: CVUplo
           </motion.div>
         </AnimatePresence>
       )}
+
+      <DetailedReviewModal
+        isOpen={showDetailedReview}
+        onClose={() => setShowDetailedReview(false)}
+        review={detailedReview}
+        isLoading={isDetailedAnalyzing}
+      />
     </motion.div>
   );
 }

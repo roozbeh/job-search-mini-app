@@ -189,6 +189,11 @@ function App() {
         <ApiKeyInput onApiKeyChange={handleApiKeyChange} />
 
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
+          <CVUpload
+            onAnalysisComplete={handleCVAnalysis}
+            onApplyCriteria={handleApplyCriteria}
+            apiKey={apiKey}
+          />
           <PreferencesForm
             preferences={preferences}
             onUpdate={setPreferences}
@@ -196,11 +201,6 @@ function App() {
             isSearching={searchState.isSearching}
             apiCallsRemaining={MAX_API_CALLS - searchState.apiCallsUsed}
             hasApiKey={!!apiKey}
-          />
-          <CVUpload
-            onAnalysisComplete={handleCVAnalysis}
-            onApplyCriteria={handleApplyCriteria}
-            apiKey={apiKey}
           />
         </div>
 
