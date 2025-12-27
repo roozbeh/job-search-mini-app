@@ -23,19 +23,9 @@
   --color-lavender: #7c3aed; /* Violet-600 */
 }
 
-@font-face {
-  font-family: "Clash Display";
-  src: url("https://fonts.cdnfonts.com/s/42227/ClashDisplay-Variable.woff2") format("woff2-variations");
-  font-weight: 200 700;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Satoshi";
-  src: url("https://fonts.cdnfonts.com/s/85546/Satoshi-Variable.woff2") format("woff2-variations");
-  font-weight: 300 900;
-  font-display: swap;
-}
+/* Using system fonts and Google Fonts as fallbacks */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800;900&display=swap');
 
 @font-face {
   font-family: "Inter";
