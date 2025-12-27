@@ -5,7 +5,13 @@ import multer from 'multer';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const pdf = require('pdf-parse');
+const pdfParseModule = require('pdf-parse');
+
+// pdf-parse exports PDFParse class, but also works as a function when called directly
+// Try to get the function directly or use the module as-is
+const pdf = typeof pdfParseModule === 'function' 
+  ? pdfParseModule 
+  : (pdfParseModule.default || pdfParseModule.PDFParse || pdfParseModule);
 
 const app = express();
 app.use(cors());
@@ -16,10 +22,16 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf' || file.mimetype === 'text/plain') {
+    // Accept PDF and TXT files by mimetype or extension
+    const isPdf = file.mimetype === 'application/pdf' || 
+                  file.originalname?.toLowerCase().endsWith('.pdf');
+    const isTxt = file.mimetype === 'text/plain' || 
+                  file.originalname?.toLowerCase().endsWith('.txt');
+    
+    if (isPdf || isTxt) {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF and TXT files are allowed'));
+      cb(new Error(`Only PDF and TXT files are allowed. Received: ${file.mimetype}`));
     }
   },
 });
