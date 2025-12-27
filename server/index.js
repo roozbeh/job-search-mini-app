@@ -2,13 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
 import multer from 'multer';
-import { createRequire } from 'module';
+import { PDFParse } from 'pdf-parse';
 
-const require = createRequire(import.meta.url);
-const pdfParseModule = require('pdf-parse');
-
-// pdf-parse exports PDFParse as a function/class
-const pdf = pdfParseModule.PDFParse || pdfParseModule.default || pdfParseModule;
+// PDFParse is a class, but can be called as a function when used with await
+// It returns a promise that resolves to the parsed PDF data
+const pdf = PDFParse;
 
 const app = express();
 app.use(cors());
@@ -163,7 +161,10 @@ app.post('/api/cv/parse', upload.single('file'), async (req, res) => {
       // Parse PDF
       try {
         console.log('Attempting to parse PDF...');
-        const pdfData = await pdf(req.file.buffer);
+        // Convert Buffer to Uint8Array as required by PDFParse
+        const uint8Array = new Uint8Array(req.file.buffer);
+        const parser = new pdf(uint8Array);
+        const pdfData = await parser.getText();
         text = pdfData.text || '';
         console.log('PDF parsed successfully, text length:', text.length);
       } catch (pdfError) {
