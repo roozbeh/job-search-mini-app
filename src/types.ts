@@ -81,3 +81,4 @@ export interface DetailedReview {
   sectionFeedback: SectionFeedback[];
   atsEvaluation: AtsEvaluation;
 }
+
