@@ -132,7 +132,7 @@ export function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
               )}
 
               <div className="flex flex-wrap items-center gap-3">
-                <WalletWidget connectLabel="Login with AgnicPay" />
+                <WalletWidget connectLabel="Login with" />
                 {!isAuthenticated && <span className="text-text-dim text-xs">or</span>}
               </div>
 
