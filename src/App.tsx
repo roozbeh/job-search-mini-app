@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { ApiKeyInput } from './components/ApiKeyInput';
 import { PreferencesForm } from './components/PreferencesForm';
@@ -6,12 +6,25 @@ import { CVUpload } from './components/CVUpload';
 import { JobResults } from './components/JobResults';
 import { Background } from './components/Background';
 import { getApiUrl } from './utils/api';
+import { fetchX402WithOAuth } from './utils/agnicPay';
 import type { JobPreferences, Job, CVAnalysis, SearchState } from './types';
+import { useAuth } from './wallet-widget/AuthContext';
 
 const MAX_API_CALLS = 5;
+const JOB_SEARCH_API_BASE = 'https://api.agnichub.xyz/v1/custom/job-search';
 
 function App() {
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const { isAuthenticated, getToken } = useAuth();
+  const [oauthToken, setOauthToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setOauthToken(null);
+      return;
+    }
+    setOauthToken(getToken());
+  }, [getToken, isAuthenticated]);
 
   const handleApiKeyChange = useCallback((key: string | null) => {
     setApiKey(key);
@@ -36,10 +49,10 @@ function App() {
   const [, setCvAnalysis] = useState<CVAnalysis | null>(null);
 
   const handleSearch = useCallback(async () => {
-    if (!apiKey) {
+    if (!apiKey && !oauthToken) {
       setSearchState(prev => ({
         ...prev,
-        error: 'Please enter your API key first.',
+        error: 'Please enter your API key or login with AgnicPay first.',
       }));
       return;
     }
@@ -98,12 +111,21 @@ function App() {
 
       for (const query of queriesToExecute) {
         try {
-          const response = await fetch(getApiUrl('/api/jobs/search'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query, apiKey }),
-          });
-          const data = await response.json();
+          let data: Record<string, unknown>;
+          if (apiKey) {
+            const response = await fetch(getApiUrl('/api/jobs/search'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query, apiKey }),
+            });
+            data = await response.json();
+          } else if (oauthToken) {
+            const targetUrl = `${JOB_SEARCH_API_BASE}/search?query=${encodeURIComponent(query)}`;
+            const response = await fetchX402WithOAuth(targetUrl, oauthToken);
+            data = await response.json();
+          } else {
+            data = { status: 'ERROR', error: { message: 'Missing authentication' } };
+          }
           callsMade++;
 
           if (data.status === 'OK' && Array.isArray(data.data)) {
@@ -164,7 +186,7 @@ function App() {
         error: 'Failed to search for jobs. Please try again.',
       }));
     }
-  }, [preferences, searchState.apiCallsUsed, apiKey]);
+  }, [preferences, searchState.apiCallsUsed, apiKey, oauthToken]);
 
   const handleCVAnalysis = (analysis: CVAnalysis) => {
     setCvAnalysis(analysis);
@@ -193,6 +215,7 @@ function App() {
             onAnalysisComplete={handleCVAnalysis}
             onApplyCriteria={handleApplyCriteria}
             apiKey={apiKey}
+            oauthToken={oauthToken}
           />
           <PreferencesForm
             preferences={preferences}
@@ -200,7 +223,7 @@ function App() {
             onSearch={handleSearch}
             isSearching={searchState.isSearching}
             apiCallsRemaining={MAX_API_CALLS - searchState.apiCallsUsed}
-            hasApiKey={!!apiKey}
+            hasApiKey={!!apiKey || !!oauthToken}
           />
         </div>
 

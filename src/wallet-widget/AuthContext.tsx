@@ -12,8 +12,8 @@ import {
   isCallbackUrl,
   getAccessToken,
   fetchWalletBalance,
-  WalletBalance,
 } from './authService';
+import type { WalletBalance } from './authService';
 
 interface AuthContextType {
   isAuthenticated: boolean;

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Key, Eye, EyeOff, Check, AlertCircle, ExternalLink } from 'lucide-react';
+import WalletWidget from '../wallet-widget/WalletWidget';
+import { useAuth } from '../wallet-widget/AuthContext';
 
 const STORAGE_KEY = 'jobflow_api_key';
 
@@ -14,6 +16,7 @@ export function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const hasInitialized = useRef(false);
+  const { isAuthenticated } = useAuth();
 
   // Initialize from localStorage on mount only
   useEffect(() => {
@@ -108,7 +111,7 @@ export function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
                   <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
                   <div className="text-sm">
                     <p className="text-text-muted mb-2">
-                      You need an API key from AgnicPay to search for jobs and analyze your CV.
+                      You can use an AgnicPay API key or login with AgnicPay to search for jobs and analyze your CV.
                     </p>
                     <div className="space-y-1">
                       <p className="text-text-dim text-xs">1. Register at AgnicPay.xyz</p>
@@ -127,6 +130,11 @@ export function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
                   </div>
                 </div>
               )}
+
+              <div className="flex flex-wrap items-center gap-3">
+                <WalletWidget connectLabel="Login with AgnicPay" />
+                {!isAuthenticated && <span className="text-text-dim text-xs">or</span>}
+              </div>
 
               <div className="relative">
                 <input

@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getAccessToken, WalletBalance } from './authService';
+import { getAccessToken } from './authService';
+import type { WalletBalance } from './authService';
 
 export interface WalletPaymentRequest {
   amountUsd: number;

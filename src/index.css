@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -22,10 +24,6 @@
   --color-mint: #059669; /* Emerald-600 */
   --color-lavender: #7c3aed; /* Violet-600 */
 }
-
-/* Using system fonts and Google Fonts as fallbacks */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800;900&display=swap');
 
 /* Fonts are loaded via @import above - no need for @font-face */
 

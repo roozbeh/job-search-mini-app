@@ -205,7 +205,7 @@ export function PreferencesForm({
         ) : !hasApiKey ? (
           <>
             <Search className="w-5 h-5" />
-            Enter API Key to Search
+            Login or enter API key to search
           </>
         ) : (
           <>
@@ -218,4 +218,3 @@ export function PreferencesForm({
     </motion.div>
   );
 }
-
