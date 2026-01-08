@@ -114,26 +114,32 @@ export function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
                       You can use an AgnicPay API key or login with AgnicPay to search for jobs and analyze your CV.
                     </p>
                     <div className="space-y-1">
-                      <p className="text-text-dim text-xs">1. Register at AgnicPay.xyz</p>
-                      <p className="text-text-dim text-xs">2. Create a new connection in your Agnic Wallet</p>
-                      <p className="text-text-dim text-xs">3. Get your API key from your Agnic Wallet</p>
-                    </div>
-                    <a
+                      <p className="text-text-dim text-xs">1. Register at 
+<a
                       href="https://agnicpay.xyz"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-accent hover:text-accent-light inline-flex items-center gap-1 transition-colors mt-2"
                     >
-                      Go to AgnicPay.xyz
+                      AgnicPay.xyz
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
+
+
+                      </p>
+                      <p className="text-text-dim text-xs">2. Create a new connection in your Agnic Wallet</p>
+                      <p className="text-text-dim text-xs">3. Get your API key from your Agnic Wallet</p>
+                    </div>
+                    
                   </div>
                 </div>
               )}
 
               <div className="flex flex-wrap items-center gap-3">
                 <WalletWidget connectLabel="Login with" />
-                {!isAuthenticated && <span className="text-text-dim text-xs">or</span>}
+                {!isAuthenticated && (
+                  <span className="text-text-dim text-xs">or enter your AgnicPay API Key here:</span>
+                )}
               </div>
 
               <div className="relative">
