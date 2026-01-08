@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { FC } from 'react';
 import { useAuth } from './AuthContext';
 import { requestWalletPayment, sendApiKeyToWebhook } from './agnicpayWallet';
 import type { WalletBalance } from './authService';
@@ -21,7 +22,7 @@ interface WalletWidgetProps {
   onSendWebhook?: (context: WalletWidgetActionContext) => Promise<void>;
 }
 
-const WalletWidget: React.FC<WalletWidgetProps> = ({
+const WalletWidget: FC<WalletWidgetProps> = ({
   className,
   connectLabel = 'Connect wallet',
   onRequestPayment,
@@ -154,7 +155,7 @@ const WalletWidget: React.FC<WalletWidgetProps> = ({
           disabled={isLoading}
           className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-white bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-60"
         >
-          <span className="text-white text-sm font-semibold">Login with</span>
+          <span className="text-white text-sm font-semibold">{connectLabel}</span>
           <span className="flex items-center gap-2">
             <span className="w-7 h-7 grid place-items-center">
               <span className="w-4 h-4 rotate-45 rounded-[1px] bg-[#7ecd33] shadow-[0_4px_12px_rgba(0,0,0,0.35)]" />

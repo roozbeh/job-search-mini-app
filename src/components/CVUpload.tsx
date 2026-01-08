@@ -21,6 +21,15 @@ export function CVUpload({ onAnalysisComplete, onApplyCriteria, apiKey, oauthTok
   const [error, setError] = useState<string | null>(null);
   const canUseAuth = Boolean(apiKey || oauthToken);
 
+  const getErrorMessage = (value: unknown, fallback: string) => {
+    if (typeof value === 'string' && value.trim()) return value;
+    if (value && typeof value === 'object' && 'message' in value) {
+      const message = (value as { message?: unknown }).message;
+      if (typeof message === 'string' && message.trim()) return message;
+    }
+    return fallback;
+  };
+
   const [showDetailedReview, setShowDetailedReview] = useState(false);
   const [isDetailedAnalyzing, setIsDetailedAnalyzing] = useState(false);
   const [detailedReview, setDetailedReview] = useState<DetailedReview | null>(null);
@@ -215,11 +224,12 @@ Provide 3-5 distinct improvement suggestions, prioritizing high-impact issues.`
         throw new Error('Missing authentication');
       }
 
-      if (data.status === 'OK') {
-        setAnalysis(data.data);
-        onAnalysisComplete(data.data);
+      const payload = data as { status?: string; data?: CVAnalysis; error?: unknown };
+      if (payload.status === 'OK' && payload.data) {
+        setAnalysis(payload.data);
+        onAnalysisComplete(payload.data);
       } else {
-        setError(data.error || 'Failed to analyze CV');
+        setError(getErrorMessage(payload.error, 'Failed to analyze CV'));
       }
     } catch (err) {
       setError('Failed to analyze CV. Please check your connection.');
@@ -343,13 +353,14 @@ OUTPUT FORMAT (JSON):
         throw new Error('Missing authentication');
       }
 
-      if (data.status === 'OK') {
-        setDetailedReview(data.data);
+      const payload = data as { status?: string; data?: DetailedReview; error?: unknown };
+      if (payload.status === 'OK' && payload.data) {
+        setDetailedReview(payload.data);
       } else {
         // Show error in the modal or close it? 
         // For now let's just log it and maybe set an error state in the modal if we had one
-        console.error(data.error);
-        setError(data.error || 'Failed to generate detailed review');
+        console.error(payload.error);
+        setError(getErrorMessage(payload.error, 'Failed to generate detailed review'));
         setShowDetailedReview(false);
       }
     } catch (err) {

@@ -109,6 +109,12 @@ function App() {
       const remainingCalls = MAX_API_CALLS - searchState.apiCallsUsed;
       const queriesToExecute = queries.slice(0, remainingCalls);
 
+      const normalizeString = (value: unknown, fallback: string) =>
+        typeof value === 'string' && value.trim() ? value : fallback;
+      const normalizeOptionalString = (value: unknown) =>
+        typeof value === 'string' && value.trim() ? value : null;
+      const normalizeBoolean = (value: unknown) => Boolean(value);
+
       for (const query of queriesToExecute) {
         try {
           let data: Record<string, unknown>;
@@ -129,23 +135,31 @@ function App() {
           callsMade++;
 
           if (data.status === 'OK' && Array.isArray(data.data)) {
-            const jobs = data.data.map((job: Record<string, unknown>) => ({
-              id: job.job_id || job.id || Math.random().toString(36),
-              title: job.job_title || job.title || 'Unknown Title',
-              company: job.employer_name || job.company || 'Unknown Company',
-              location: job.job_city
-                ? `${job.job_city}${job.job_state ? `, ${job.job_state}` : ''}${job.job_country ? `, ${job.job_country}` : ''}`
-                : job.location || 'Location not specified',
-              salary: job.job_salary || job.salary_range || null,
-              description: job.job_description || job.description || null,
-              postedDate: job.job_posted_at_datetime_utc
-                ? new Date(String(job.job_posted_at_datetime_utc)).toLocaleDateString()
-                : job.posted_date ? String(job.posted_date) : null,
-              applicationUrl: job.job_apply_link || job.apply_link || job.url || null,
-              companyLogo: job.employer_logo || job.company_logo || null,
-              isRemote: job.job_is_remote || job.is_remote || false,
-              employmentType: job.job_employment_type || job.employment_type || null,
-            }));
+            const jobs = data.data.map((job: Record<string, unknown>) => {
+              const jobId = job.job_id ?? job.id ?? Math.random().toString(36);
+              const jobCity = normalizeOptionalString(job.job_city);
+              const jobState = normalizeOptionalString(job.job_state);
+              const jobCountry = normalizeOptionalString(job.job_country);
+              const location = jobCity
+                ? `${jobCity}${jobState ? `, ${jobState}` : ''}${jobCountry ? `, ${jobCountry}` : ''}`
+                : normalizeString(job.location, 'Location not specified');
+
+              return {
+                id: String(jobId),
+                title: normalizeString(job.job_title ?? job.title, 'Unknown Title'),
+                company: normalizeString(job.employer_name ?? job.company, 'Unknown Company'),
+                location,
+                salary: normalizeOptionalString(job.job_salary ?? job.salary_range),
+                description: normalizeOptionalString(job.job_description ?? job.description),
+                postedDate: job.job_posted_at_datetime_utc
+                  ? new Date(String(job.job_posted_at_datetime_utc)).toLocaleDateString()
+                  : normalizeOptionalString(job.posted_date),
+                applicationUrl: normalizeOptionalString(job.job_apply_link ?? job.apply_link ?? job.url),
+                companyLogo: normalizeOptionalString(job.employer_logo ?? job.company_logo),
+                isRemote: normalizeBoolean(job.job_is_remote ?? job.is_remote),
+                employmentType: normalizeOptionalString(job.job_employment_type ?? job.employment_type),
+              };
+            });
             allJobs.push(...jobs);
           }
         } catch (err) {
