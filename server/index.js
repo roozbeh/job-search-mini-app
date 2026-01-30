@@ -53,11 +53,11 @@ app.get('/api/health', (req, res) => {
 });
 
 // Job Search API configuration - using AgnicPay proxy
-const AGNIC_PAY_BASE = 'https://api.agnicpay.xyz/api/x402/fetch';
-const JOB_SEARCH_API_BASE = 'https://api.agnichub.xyz/v1/custom/job-search';
+const AGNIC_PAY_BASE = 'https://api.agnic.ai/api/x402/fetch';
+const JOB_SEARCH_API_BASE = 'https://api.agnic.ai/v1/custom/job-search';
 
 // AgnicPay LLM base URL
-const AGNIC_LLM_BASE = 'https://api.agnicpay.xyz/v1';
+const AGNIC_LLM_BASE = 'https://api.agnic.ai/v1';
 
 // Search jobs endpoint
 app.post('/api/jobs/search', async (req, res) => {

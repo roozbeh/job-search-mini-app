@@ -217,7 +217,7 @@ export async function fetchWalletBalance(): Promise<WalletBalance | null> {
   if (!token) return null;
 
   try {
-    const response = await fetch('https://api.agnicpay.xyz/api/balance?network=base', {
+    const response = await fetch('https://api.agnic.ai/api/balance?network=base', {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -250,7 +250,7 @@ export async function fetchTransactions(limit = 10): Promise<TransactionsRespons
   if (!token) return null;
 
   try {
-    const response = await fetch(`https://api.agnicpay.xyz/api/transactions?limit=${limit}`, {
+    const response = await fetch(`https://api.agnic.ai/api/transactions?limit=${limit}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },

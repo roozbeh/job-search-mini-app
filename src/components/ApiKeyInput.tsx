@@ -116,12 +116,12 @@ export function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
                     <div className="space-y-1">
                       <p className="text-text-dim text-xs">1. Register at 
 <a
-                      href="https://agnicpay.xyz"
+                      href="https://pay.agnic.ai"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-accent hover:text-accent-light inline-flex items-center gap-1 transition-colors mt-2"
                     >
-                       AgnicPay.xyz
+                       pay.agnic.ai
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
 

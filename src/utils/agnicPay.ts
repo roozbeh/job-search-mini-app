@@ -1,5 +1,5 @@
-const SIGN_PAYMENT_ENDPOINT = 'https://api.agnicpay.xyz/api/sign-payment';
-const AGNIC_LLM_ENDPOINT = 'https://api.agnicpay.xyz/v1/chat/completions';
+const SIGN_PAYMENT_ENDPOINT = 'https://api.agnic.ai/api/sign-payment';
+const AGNIC_LLM_ENDPOINT = 'https://api.agnic.ai/v1/chat/completions';
 
 type PaymentRequirements = {
   x402Version?: number;
