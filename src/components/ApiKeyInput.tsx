@@ -121,7 +121,7 @@ export function ApiKeyInput({ onApiKeyChange }: ApiKeyInputProps) {
                       rel="noopener noreferrer"
                       className="text-accent hover:text-accent-light inline-flex items-center gap-1 transition-colors mt-2"
                     >
-                      AgnicPay.xyz
+                       AgnicPay.xyz
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
 

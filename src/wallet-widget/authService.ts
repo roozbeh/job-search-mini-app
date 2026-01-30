@@ -4,9 +4,9 @@
  */
 
 const OAUTH_CONFIG = {
-  authorizationUrl: 'https://app.agnicpay.xyz/oauth-consent',
-  tokenUrl: 'https://api.agnicpay.xyz/oauth/token',
-  clientId: 'myfit-check',
+  authorizationUrl: 'https://api.agnic.ai/oauth/authorize',
+  tokenUrl: 'https://api.agnic.ai/oauth/token',
+  clientId: 'app_8f1d1121c46cfa48c0fdc101',
   scopes: 'payments:sign balance:read',
   get redirectUri() {
     return `${window.location.origin}/callback`;
@@ -65,6 +65,7 @@ export async function initiateLogin(): Promise<void> {
   sessionStorage.setItem(STORAGE_KEYS.state, state);
 
   const params = new URLSearchParams({
+    response_type: 'code',
     client_id: OAUTH_CONFIG.clientId,
     redirect_uri: OAUTH_CONFIG.redirectUri,
     state: state,
