@@ -6,8 +6,11 @@ _client: AsyncIOMotorClient | None = None
 
 async def connect_db() -> None:
     global _client
-    _client = AsyncIOMotorClient(settings.mongodb_url)
-    # Verify connection
+    _client = AsyncIOMotorClient(
+        settings.mongodb_url,
+        connect=False,
+        maxPoolSize=10,
+    )
     await _client.admin.command("ping")
 
 
