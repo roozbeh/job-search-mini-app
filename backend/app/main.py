@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 
 from .database import connect_db, close_db
 from .routers import cv, jobs
@@ -15,7 +16,13 @@ async def lifespan(app: FastAPI):
     await close_db()
 
 
-app = FastAPI(title="JobSearch API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(
+    title="JobSearch API",
+    version="1.0.0",
+    lifespan=lifespan,
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,7 +35,6 @@ app.include_router(cv.router, prefix="/api/cv", tags=["cv"])
 app.include_router(jobs.router, prefix="/api/jobs", tags=["jobs"])
 
 
-@app.get("/health")
 @app.get("/api/health")
 async def health():
     return {
@@ -36,3 +42,8 @@ async def health():
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "service": "jobsearch-backend",
     }
+
+
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    return "<h1>JobSearch</h1><p>Web interface coming soon.</p>"
