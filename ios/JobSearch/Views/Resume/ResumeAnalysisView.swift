@@ -148,7 +148,7 @@ struct OverviewTab: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             CriteriaRow(label: "Target Roles", values: criteria.jobTitles)
-            CriteriaRow(label: "Top Skills", values: criteria.skills.prefix(8).map(String.init))
+            CriteriaRow(label: "Top Skills", values: Array(criteria.skills.prefix(8)))
             CriteriaRow(label: "Industries", values: criteria.industries)
             CriteriaRow(label: "Preferred Locations", values: criteria.preferredLocations)
 

@@ -36,7 +36,7 @@ actor APIService {
     static let shared = APIService()
 
     // MARK: - Configuration
-    private(set) var backendBaseURL: String = "https://jobflow-backend.onrender.com"
+    private(set) var backendBaseURL: String = "https://jobsearch.ipronto.net"
     private(set) var apiKey: String = ""
 
     /// Update the backend URL at runtime (e.g. from Settings screen)

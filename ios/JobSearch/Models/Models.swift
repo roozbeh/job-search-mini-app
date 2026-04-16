@@ -93,7 +93,8 @@ struct JobPreferences: Codable {
 
 // MARK: - Job
 
-struct Job: Codable, Identifiable, Equatable {
+struct Job: Codable, Identifiable, Equatable, Hashable {
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
     let id: String
     let title: String
     let company: String

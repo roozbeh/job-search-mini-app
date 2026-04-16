@@ -31,7 +31,7 @@ final class AppViewModel: ObservableObject {
     @Published var apiKey: String = "" {
         didSet { persistAPIKey() }
     }
-    @Published var backendURL: String = "https://jobflow-backend.onrender.com" {
+    @Published var backendURL: String = "https://jobsearch.ipronto.net" {
         didSet { reconfigureService() }
     }
 
@@ -274,7 +274,7 @@ final class AppViewModel: ObservableObject {
     private func loadPersistedState() {
         let decoder = JSONDecoder()
         apiKey     = defaults.string(forKey: Keys.apiKey) ?? ""
-        backendURL = defaults.string(forKey: Keys.backendURL) ?? "https://jobflow-backend.onrender.com"
+        backendURL = defaults.string(forKey: Keys.backendURL) ?? "https://jobsearch.ipronto.net"
 
         if let d = defaults.data(forKey: Keys.resume),
            let r = try? decoder.decode(Resume.self, from: d) {
