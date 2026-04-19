@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var vm: AppViewModel
-    @State private var showAPIKeySetup = false
+    @State private var showLoginSheet = false
     @State private var showResetConfirm = false
     @State private var showResumeDetail = false
 
@@ -62,18 +62,21 @@ struct ProfileView: View {
                     }
                 }
 
-                // API Configuration
-                Section("Configuration") {
-                    Button {
-                        showAPIKeySetup = true
-                    } label: {
+                // Agnic Account
+                Section("Account") {
+                    Button { showLoginSheet = true } label: {
                         HStack {
-                            Label("API Key", systemImage: "key.fill")
+                            Label("Agnic Account", systemImage: "person.crop.circle")
                                 .foregroundStyle(.primary)
                             Spacer()
-                            Text(vm.apiKey.isEmpty ? "Not set" : "••••••••")
-                                .font(.caption)
-                                .foregroundStyle(vm.apiKey.isEmpty ? .red : .green)
+                            HStack(spacing: 4) {
+                                Circle()
+                                    .fill(vm.auth.isLoggedIn ? Color.green : Color.red)
+                                    .frame(width: 8, height: 8)
+                                Text(vm.auth.isLoggedIn ? "Connected" : "Not signed in")
+                                    .font(.caption)
+                                    .foregroundStyle(vm.auth.isLoggedIn ? .green : .red)
+                            }
                         }
                     }
                 }
@@ -90,9 +93,9 @@ struct ProfileView: View {
                 }
             }
             .navigationTitle("Profile")
-            .sheet(isPresented: $showAPIKeySetup) {
-                APIKeySetupSheet()
-                    .presentationDetents([.medium])
+            .sheet(isPresented: $showLoginSheet) {
+                AgnicLoginSheet()
+                    .presentationDetents([.medium, .large])
             }
             .sheet(isPresented: $showResumeDetail) {
                 if vm.resume?.analysis != nil {
@@ -112,57 +115,3 @@ struct ProfileView: View {
     }
 }
 
-// MARK: - API Key Setup Sheet
-
-struct APIKeySetupSheet: View {
-    @EnvironmentObject var vm: AppViewModel
-    @State private var tempKey = ""
-    @State private var tempURL = ""
-    @Environment(\.dismiss) var dismiss
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    SecureField("AgnicPay API Key", text: $tempKey)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                } header: {
-                    Text("API Key")
-                } footer: {
-                    Text("Get your API key from agnic.ai. This key is stored locally on your device only.")
-                }
-
-                Section {
-                    TextField("Backend URL", text: $tempURL)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                        .keyboardType(.URL)
-                } header: {
-                    Text("Backend URL")
-                } footer: {
-                    Text("Leave as default unless you're running your own backend.")
-                }
-            }
-            .navigationTitle("API Configuration")
-            .navigationBarTitleDisplayMode(.inline)
-            .onAppear {
-                tempKey = vm.apiKey
-                tempURL = vm.backendURL
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
-                        vm.apiKey = tempKey
-                        if !tempURL.isEmpty { vm.backendURL = tempURL }
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                }
-            }
-        }
-    }
-}

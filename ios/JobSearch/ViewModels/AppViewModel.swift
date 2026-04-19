@@ -27,10 +27,11 @@ final class AppViewModel: ObservableObject {
     @Published var loadingMessage: String = ""
     @Published var errorMessage: String? = nil
 
+    // Auth
+    let auth = AgnicAuthService.shared
+
     // Settings
-    @Published var apiKey: String = "" {
-        didSet { persistAPIKey() }
-    }
+    var apiKey: String { auth.accessToken ?? "" }
     @Published var backendURL: String = "https://jobsearch.ipronto.net" {
         didSet { reconfigureService() }
     }
@@ -39,11 +40,17 @@ final class AppViewModel: ObservableObject {
 
     private let defaults = UserDefaults.standard
     private let api = APIService.shared
+    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Init
 
     init() {
         loadPersistedState()
+        // Reconfigure API service whenever the OAuth token changes
+        auth.$accessToken
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.reconfigureService() }
+            .store(in: &cancellables)
     }
 
     // MARK: - Resume Flow
@@ -249,17 +256,11 @@ final class AppViewModel: ObservableObject {
         static let preferences = "app.preferences"
         static let savedJobs   = "app.savedJobs"
         static let dismissed   = "app.dismissedJobIds"
-        static let apiKey      = "app.apiKey"
         static let backendURL  = "app.backendURL"
     }
 
-    private func persistAPIKey() {
-        defaults.set(apiKey, forKey: Keys.apiKey)
-        Task { await reconfigureService() }
-    }
-
     private func reconfigureService() {
-        Task { await api.configure(backendURL: backendURL, apiKey: apiKey) }
+        Task { await api.configure(backendURL: backendURL, apiKey: auth.accessToken ?? "") }
     }
 
     private func persistState() {
@@ -273,7 +274,6 @@ final class AppViewModel: ObservableObject {
 
     private func loadPersistedState() {
         let decoder = JSONDecoder()
-        apiKey     = defaults.string(forKey: Keys.apiKey) ?? ""
         backendURL = defaults.string(forKey: Keys.backendURL) ?? "https://jobsearch.ipronto.net"
 
         if let d = defaults.data(forKey: Keys.resume),
@@ -297,8 +297,7 @@ final class AppViewModel: ObservableObject {
             phase = p
         }
 
-        // Reconfigure service with stored credentials
-        Task { await api.configure(backendURL: backendURL, apiKey: apiKey) }
+        reconfigureService()
     }
 
     // MARK: - Reset

@@ -4,6 +4,7 @@ struct JobDiscoveryView: View {
     @EnvironmentObject var vm: AppViewModel
     @State private var selectedJob: Job? = nil
     @State private var showNewSearch = false
+    @State private var showLoginSheet = false
 
     private var remainingJobs: [Job] {
         Array(vm.discoveryJobs.dropFirst(vm.currentJobIndex))
@@ -27,16 +28,22 @@ struct JobDiscoveryView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        withAnimation { vm.phase = .preferences }
-                    } label: {
-                        Image(systemName: "slider.horizontal.3")
+                    HStack(spacing: 4) {
+                        UserIconButton(showLogin: $showLoginSheet)
+                        Button {
+                            withAnimation { vm.phase = .preferences }
+                        } label: {
+                            Image(systemName: "slider.horizontal.3")
+                        }
+                        .foregroundStyle(.indigo)
                     }
-                    .foregroundStyle(.indigo)
                 }
             }
             .navigationDestination(item: $selectedJob) { job in
                 JobDetailView(job: job)
+            }
+            .sheet(isPresented: $showLoginSheet) {
+                AgnicLoginSheet()
             }
         }
     }

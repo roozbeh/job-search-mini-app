@@ -8,6 +8,7 @@ struct ResumeUploadView: View {
     @State private var showTextEditor = false
     @State private var pastedText = ""
     @State private var isDragging = false
+    @State private var showLoginSheet = false
 
     var body: some View {
         NavigationStack {
@@ -27,8 +28,36 @@ struct ResumeUploadView: View {
                     }
                     .padding(.top, 24)
 
+                    // Login prompt if not signed in
+                    if !vm.auth.isLoggedIn {
+                        Button { showLoginSheet = true } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "person.crop.circle")
+                                    .foregroundStyle(.indigo)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Sign in required")
+                                        .font(.subheadline).fontWeight(.semibold)
+                                        .foregroundStyle(.primary)
+                                    Text("Connect your Agnic account to analyze your resume")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(16)
+                            .background(Color.indigo.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.indigo.opacity(0.2), lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 24)
+                    }
+
                     // Drop zone / tap to pick
                     Button {
+                        guard vm.auth.isLoggedIn else { showLoginSheet = true; return }
                         showFilePicker = true
                     } label: {
                         VStack(spacing: 16) {
@@ -75,6 +104,7 @@ struct ResumeUploadView: View {
 
                     // Paste option
                     Button {
+                        guard vm.auth.isLoggedIn else { showLoginSheet = true; return }
                         showTextEditor = true
                     } label: {
                         Label("Paste Resume Text", systemImage: "doc.on.clipboard")
@@ -104,7 +134,13 @@ struct ResumeUploadView: View {
                     Button("Back") { vm.phase = .onboarding }
                         .foregroundStyle(.indigo)
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    UserIconButton(showLogin: $showLoginSheet)
+                }
             }
+        }
+        .sheet(isPresented: $showLoginSheet) {
+            AgnicLoginSheet()
         }
         .sheet(isPresented: $showTextEditor) {
             PasteResumeSheet(text: $pastedText) {

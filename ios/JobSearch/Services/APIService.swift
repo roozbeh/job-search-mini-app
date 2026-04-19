@@ -1,4 +1,138 @@
 import Foundation
+import UIKit
+import AuthenticationServices
+import CryptoKit
+
+// MARK: - Agnic OAuth (PKCE)
+
+@MainActor
+final class AgnicAuthService: NSObject, ObservableObject {
+
+    static let shared = AgnicAuthService()
+
+    @Published var isLoggedIn = false
+    @Published var accessToken: String? = nil
+    @Published var isLoggingIn = false
+
+    private let clientId    = "app_8f1d1121c46cfa48c0fdc101"
+    private let authURL     = URL(string: "https://api.agnic.ai/oauth/authorize")!
+    private let tokenURL    = URL(string: "https://api.agnic.ai/oauth/token")!
+    private let redirectURI = "https://jobsearch.ipronto.net/api/oauth/callback"
+    private let scheme      = "jobsearch"
+    private let scopes      = "payments:sign balance:read"
+    private let tokenKey    = "agnic_access_token"
+
+    override init() {
+        super.init()
+        if let t = UserDefaults.standard.string(forKey: tokenKey), !t.isEmpty {
+            accessToken = t
+            isLoggedIn  = true
+        }
+    }
+
+    func login() async {
+        isLoggingIn = true
+        defer { isLoggingIn = false }
+        do {
+            let verifier   = randomString(64)
+            let challenge  = pkceChallenge(verifier)
+            let state      = randomString(32)
+
+            var comps = URLComponents(url: authURL, resolvingAgainstBaseURL: false)!
+            comps.queryItems = [
+                .init(name: "response_type",          value: "code"),
+                .init(name: "client_id",              value: clientId),
+                .init(name: "redirect_uri",           value: redirectURI),
+                .init(name: "state",                  value: state),
+                .init(name: "scope",                  value: scopes),
+                .init(name: "code_challenge",         value: challenge),
+                .init(name: "code_challenge_method",  value: "S256"),
+            ]
+
+            let code = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<String, Error>) in
+                let session = ASWebAuthenticationSession(url: comps.url!, callbackURLScheme: scheme) { url, error in
+                    if let error { cont.resume(throwing: error); return }
+                    guard let url,
+                          let c    = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                          let code = c.queryItems?.first(where: { $0.name == "code" })?.value
+                    else { cont.resume(throwing: AuthError.noCode); return }
+                    cont.resume(returning: code)
+                }
+                session.presentationContextProvider = self
+                session.prefersEphemeralWebBrowserSession = false
+                session.start()
+            }
+
+            let token = try await exchangeCode(code, verifier: verifier)
+            accessToken = token
+            isLoggedIn  = true
+            UserDefaults.standard.set(token, forKey: tokenKey)
+        } catch {
+            // User cancelled or network error — silently ignore cancellation
+            let msg = (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin ? nil : error.localizedDescription
+            if let msg { print("[AgnicAuth] Login failed: \(msg)") }
+        }
+    }
+
+    func logout() {
+        accessToken = nil
+        isLoggedIn  = false
+        UserDefaults.standard.removeObject(forKey: tokenKey)
+    }
+
+    // MARK: - Private helpers
+
+    private func exchangeCode(_ code: String, verifier: String) async throws -> String {
+        var req = URLRequest(url: tokenURL)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONSerialization.data(withJSONObject: [
+            "grant_type":    "authorization_code",
+            "code":          code,
+            "redirect_uri":  redirectURI,
+            "client_id":     clientId,
+            "code_verifier": verifier,
+        ])
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard (resp as? HTTPURLResponse)?.statusCode == 200,
+              let json  = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let token = json["access_token"] as? String
+        else { throw AuthError.tokenExchangeFailed }
+        return token
+    }
+
+    private func randomString(_ length: Int) -> String {
+        let chars = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
+        return String((0..<length).map { _ in chars.randomElement()! })
+    }
+
+    private func pkceChallenge(_ verifier: String) -> String {
+        Data(SHA256.hash(data: Data(verifier.utf8)))
+            .base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+
+    enum AuthError: LocalizedError {
+        case noCode, tokenExchangeFailed
+        var errorDescription: String? {
+            switch self {
+            case .noCode:              return "Login cancelled or no code received."
+            case .tokenExchangeFailed: return "Failed to complete login. Please try again."
+            }
+        }
+    }
+}
+
+extension AgnicAuthService: ASWebAuthenticationPresentationContextProviding {
+    nonisolated func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow } ?? UIWindow()
+    }
+}
 
 // MARK: - Errors
 

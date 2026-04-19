@@ -1,5 +1,117 @@
 import SwiftUI
 
+// MARK: - Agnic Login Sheet
+
+struct AgnicLoginSheet: View {
+    @EnvironmentObject var vm: AppViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 32) {
+                Spacer()
+
+                // Icon + title
+                VStack(spacing: 16) {
+                    Image(systemName: "person.crop.circle.badge.checkmark")
+                        .font(.system(size: 64))
+                        .foregroundStyle(.indigo)
+                    Text(vm.auth.isLoggedIn ? "Signed In" : "Sign In with Agnic")
+                        .font(.title2).bold()
+                    Text(vm.auth.isLoggedIn
+                         ? "Your Agnic wallet is connected. AI analysis runs on your account."
+                         : "Connect your Agnic wallet to run AI-powered resume analysis and job search.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+
+                if vm.auth.isLoggedIn {
+                    // Logged-in state
+                    VStack(spacing: 12) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                            Text("Connected to Agnic")
+                                .font(.subheadline).fontWeight(.medium)
+                        }
+                        .padding(.horizontal, 24).padding(.vertical, 14)
+                        .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
+
+                        Button(role: .destructive) {
+                            vm.auth.logout()
+                            dismiss()
+                        } label: {
+                            Text("Sign Out")
+                                .font(.subheadline).fontWeight(.medium)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                        }
+                        .buttonStyle(.bordered)
+                        .padding(.horizontal)
+                    }
+                } else {
+                    // Sign-in button
+                    Button {
+                        Task { await vm.auth.login() }
+                    } label: {
+                        HStack(spacing: 10) {
+                            if vm.auth.isLoggingIn {
+                                ProgressView().tint(.white)
+                            } else {
+                                Image(systemName: "person.crop.circle")
+                            }
+                            Text(vm.auth.isLoggingIn ? "Signing in…" : "Sign in with Agnic")
+                                .fontWeight(.semibold)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.indigo, in: RoundedRectangle(cornerRadius: 16))
+                        .foregroundStyle(.white)
+                    }
+                    .disabled(vm.auth.isLoggingIn)
+                    .padding(.horizontal)
+
+                    Text("New to Agnic? Visit pay.agnic.ai to create a free account.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+
+                Spacer()
+            }
+            .navigationTitle("Account")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .onChange(of: vm.auth.isLoggedIn) { _, loggedIn in
+                if loggedIn { dismiss() }
+            }
+        }
+    }
+}
+
+// MARK: - User Icon Button (reusable toolbar item)
+
+struct UserIconButton: View {
+    @EnvironmentObject var vm: AppViewModel
+    @Binding var showLogin: Bool
+
+    var body: some View {
+        Button { showLogin = true } label: {
+            Image(systemName: vm.auth.isLoggedIn
+                  ? "person.crop.circle.fill"
+                  : "person.crop.circle")
+                .foregroundStyle(vm.auth.isLoggedIn ? .indigo : .secondary)
+                .symbolEffect(.bounce, value: vm.auth.isLoggedIn)
+        }
+    }
+}
+
 /// Root view: handles the onboarding/setup flow and the main tab bar.
 struct ContentView: View {
     @EnvironmentObject var vm: AppViewModel
