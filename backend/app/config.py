@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     agnic_llm_base: str = "https://api.agnic.ai/v1"
     agnic_job_search_base: str = "https://api.agnic.ai/v1/custom/job-search"
     agnic_fetch_proxy: str = "https://api.agnic.ai/api/x402/fetch"
+    agnicpay_api_key: str = ""
 
     port: int = 8000
 

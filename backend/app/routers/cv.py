@@ -15,13 +15,16 @@ router = APIRouter()
 
 class AnalyzeRequest(BaseModel):
     cvText: str
-    apiKey: str
+    apiKey: str = ""
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 def _openai_client(api_key: str) -> AsyncOpenAI:
-    return AsyncOpenAI(api_key=api_key, base_url=settings.agnic_llm_base)
+    key = api_key or settings.agnicpay_api_key
+    if not key:
+        raise HTTPException(status_code=500, detail="No API key configured on server")
+    return AsyncOpenAI(api_key=key, base_url=settings.agnic_llm_base)
 
 
 async def _chat_json(api_key: str, system: str, user: str) -> dict:
