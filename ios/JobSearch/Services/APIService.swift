@@ -13,14 +13,17 @@ final class AgnicAuthService: NSObject, ObservableObject {
     @Published var isLoggedIn = false
     @Published var accessToken: String? = nil
     @Published var isLoggingIn = false
+    @Published var loginError: String? = nil
 
-    private let clientId    = "app_8f1d1121c46cfa48c0fdc101"
+    private let clientId    = "app_8e1104734685043d152d6184"
     private let authURL     = URL(string: "https://api.agnic.ai/oauth/authorize")!
     private let tokenURL    = URL(string: "https://api.agnic.ai/oauth/token")!
+    private let balanceURL  = URL(string: "https://api.agnic.ai/api/balance?network=base")!
     private let redirectURI = "https://jobsearch.ipronto.net/api/oauth/callback"
     private let scheme      = "jobsearch"
     private let scopes      = "payments:sign balance:read"
     private let tokenKey    = "agnic_access_token"
+    private var authSession: ASWebAuthenticationSession?
 
     override init() {
         super.init()
@@ -30,8 +33,21 @@ final class AgnicAuthService: NSObject, ObservableObject {
         }
     }
 
+    /// Validate stored token against Agnic; logout if expired. Call on app startup.
+    func validateStoredToken() async {
+        guard let token = accessToken else { return }
+        var req = URLRequest(url: balanceURL, timeoutInterval: 10)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let (_, resp) = try? await URLSession.shared.data(for: req),
+              (resp as? HTTPURLResponse)?.statusCode != 401 else {
+            logout()
+            return
+        }
+    }
+
     func login() async {
         isLoggingIn = true
+        loginError  = nil
         defer { isLoggingIn = false }
         do {
             let verifier   = randomString(64)
@@ -60,17 +76,20 @@ final class AgnicAuthService: NSObject, ObservableObject {
                 }
                 session.presentationContextProvider = self
                 session.prefersEphemeralWebBrowserSession = false
+                self.authSession = session
                 session.start()
             }
+            authSession = nil
 
             let token = try await exchangeCode(code, verifier: verifier)
             accessToken = token
             isLoggedIn  = true
+            loginError  = nil
             UserDefaults.standard.set(token, forKey: tokenKey)
+        } catch let err as ASWebAuthenticationSessionError where err.code == .canceledLogin {
+            // User tapped Cancel — no error message needed
         } catch {
-            // User cancelled or network error — silently ignore cancellation
-            let msg = (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin ? nil : error.localizedDescription
-            if let msg { print("[AgnicAuth] Login failed: \(msg)") }
+            loginError = error.localizedDescription
         }
     }
 
@@ -83,7 +102,7 @@ final class AgnicAuthService: NSObject, ObservableObject {
     // MARK: - Private helpers
 
     private func exchangeCode(_ code: String, verifier: String) async throws -> String {
-        var req = URLRequest(url: tokenURL)
+        var req = URLRequest(url: tokenURL, timeoutInterval: 15)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONSerialization.data(withJSONObject: [
@@ -144,6 +163,7 @@ enum APIError: LocalizedError {
     case networkError(String)
     case rateLimitExceeded
     case missingAPIKey
+    case tokenExpired
 
     var errorDescription: String? {
         switch self {
@@ -154,6 +174,7 @@ enum APIError: LocalizedError {
         case .networkError(let msg):   return "Network error: \(msg)"
         case .rateLimitExceeded:  return "Rate limit reached. Please try again later."
         case .missingAPIKey:      return "API key is required. Please add it in Settings."
+        case .tokenExpired:       return "Your Agnic session expired. Please sign in again."
         }
     }
 }
@@ -366,6 +387,7 @@ actor APIService {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             if let http = response as? HTTPURLResponse {
+                if http.statusCode == 401 { throw APIError.tokenExpired }
                 if http.statusCode == 429 { throw APIError.rateLimitExceeded }
                 if http.statusCode >= 500 {
                     throw APIError.serverError("HTTP \(http.statusCode)")

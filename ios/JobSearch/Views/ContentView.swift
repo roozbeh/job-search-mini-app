@@ -72,6 +72,14 @@ struct AgnicLoginSheet: View {
                     .disabled(vm.auth.isLoggingIn)
                     .padding(.horizontal)
 
+                    if let err = vm.auth.loginError {
+                        Text(err)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+
                     Text("New to Agnic? Visit pay.agnic.ai to create a free account.")
                         .font(.caption)
                         .foregroundStyle(.secondary)

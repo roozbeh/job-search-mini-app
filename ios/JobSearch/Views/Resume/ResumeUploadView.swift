@@ -10,6 +10,9 @@ struct ResumeUploadView: View {
     @State private var isDragging = false
     @State private var showLoginSheet = false
 
+    // Mirror vm.showLoginSheet so the token-expiry path auto-opens this sheet
+    private var needsLogin: Bool { vm.showLoginSheet }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -139,8 +142,11 @@ struct ResumeUploadView: View {
                 }
             }
         }
-        .sheet(isPresented: $showLoginSheet) {
+        .sheet(isPresented: $showLoginSheet, onDismiss: { vm.showLoginSheet = false }) {
             AgnicLoginSheet()
+        }
+        .onChange(of: vm.showLoginSheet) { _, open in
+            if open { showLoginSheet = true }
         }
         .sheet(isPresented: $showTextEditor) {
             PasteResumeSheet(text: $pastedText) {

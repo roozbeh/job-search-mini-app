@@ -29,6 +29,7 @@ final class AppViewModel: ObservableObject {
 
     // Auth
     let auth = AgnicAuthService.shared
+    @Published var showLoginSheet = false
 
     // Settings
     var apiKey: String { auth.accessToken ?? "" }
@@ -46,11 +47,12 @@ final class AppViewModel: ObservableObject {
 
     init() {
         loadPersistedState()
-        // Reconfigure API service whenever the OAuth token changes
         auth.$accessToken
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.reconfigureService() }
             .store(in: &cancellables)
+        // Validate stored token in background; auto-logout if expired
+        Task { await auth.validateStoredToken() }
     }
 
     // MARK: - Resume Flow
@@ -101,6 +103,9 @@ final class AppViewModel: ObservableObject {
             persistState()
             phase = .resumeAnalysis
 
+        } catch APIError.tokenExpired {
+            auth.logout()
+            showLoginSheet = true
         } catch {
             errorMessage = error.localizedDescription
         }
