@@ -373,6 +373,37 @@ actor APIService {
         return try JSONDecoder().decode(MatchGuidance.self, from: jsonData)
     }
 
+    // MARK: - Session Sync
+
+    func loadSession(apiKey: String) async throws -> UserSession? {
+        let url = try makeURL("/api/session/load")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(["apiKey": apiKey])
+
+        struct SessionResponse: Codable {
+            let status: String
+            let data: UserSession?
+        }
+        let response: SessionResponse = try await perform(request)
+        return response.data
+    }
+
+    func saveSession(_ session: UserSession, apiKey: String) async throws {
+        let url = try makeURL("/api/session/save")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let encoder = JSONEncoder()
+        let sessionData = try encoder.encode(session)
+        let sessionJSON = try JSONSerialization.jsonObject(with: sessionData)
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["apiKey": apiKey, "session": sessionJSON])
+
+        struct SaveResponse: Codable { let status: String }
+        let _: SaveResponse = try await perform(request)
+    }
+
     // MARK: - Private Helpers
 
     private func makeURL(_ path: String) throws -> URL {

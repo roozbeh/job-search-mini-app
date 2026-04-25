@@ -27,7 +27,7 @@ struct ResumeUploadView: View {
                             .foregroundStyle(.indigo)
                         Text("Upload Your Resume")
                             .font(.largeTitle).bold()
-                        Text("PDF or plain text · We never store your resume on our servers")
+                        Text("PDF or plain text · Your progress is saved to your account")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -126,7 +126,7 @@ struct ResumeUploadView: View {
                     HStack(alignment: .top, spacing: 10) {
                         Image(systemName: "lock.shield.fill")
                             .foregroundStyle(.green)
-                        Text("Your resume text is sent to OpenAI for analysis and is not stored by us. Review our privacy policy for details.")
+                        Text("Your resume and job preferences are securely saved to your Agnic account so you can continue where you left off.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

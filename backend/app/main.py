@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from .database import connect_db, close_db
-from .routers import cv, jobs
+from .routers import cv, jobs, session
 
 
 @asynccontextmanager
@@ -33,6 +33,7 @@ app.add_middleware(
 
 app.include_router(cv.router, prefix="/api/cv", tags=["cv"])
 app.include_router(jobs.router, prefix="/api/jobs", tags=["jobs"])
+app.include_router(session.router, prefix="/api/session", tags=["session"])
 
 
 @app.get("/api/health")

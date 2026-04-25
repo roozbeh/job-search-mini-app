@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 from datetime import datetime, timezone, timedelta
 from typing import Any
 
@@ -9,6 +10,8 @@ from pydantic import BaseModel
 
 from ..config import settings
 from ..database import get_db
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -89,12 +92,19 @@ async def _set_cached(query: str, jobs: list[dict]) -> None:
 
 
 async def _agnic_fetch(url: str, api_key: str) -> Any:
+    effective_key = api_key or settings.agnicpay_api_key
+    if not effective_key:
+        raise HTTPException(status_code=500, detail="No API key configured on server")
     proxy_url = f"{settings.agnic_fetch_proxy}?url={httpx.URL(url)}"
+    logger.info("agnic_fetch url=%s key_source=%s", url, "user" if api_key else "server")
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             proxy_url,
-            headers={"X-Agnic-Token": api_key, "Content-Type": "application/json"},
+            headers={"X-Agnic-Token": effective_key, "Content-Type": "application/json"},
         )
+    if resp.status_code == 401:
+        logger.warning("agnic_fetch 401 from proxy url=%s", url)
+        raise HTTPException(status_code=401, detail="Agnic token expired — please sign in again")
     resp.raise_for_status()
     return resp.json()
 

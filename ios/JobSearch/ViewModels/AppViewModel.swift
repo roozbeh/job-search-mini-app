@@ -51,8 +51,10 @@ final class AppViewModel: ObservableObject {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.reconfigureService() }
             .store(in: &cancellables)
-        // Validate stored token in background; auto-logout if expired
-        Task { await auth.validateStoredToken() }
+        Task {
+            await auth.validateStoredToken()
+            if auth.isLoggedIn { await loadSessionFromServer() }
+        }
     }
 
     // MARK: - Resume Flow
@@ -272,11 +274,63 @@ final class AppViewModel: ObservableObject {
 
     private func persistState() {
         let encoder = JSONEncoder()
-        if let d = try? encoder.encode(resume)         { defaults.set(d, forKey: Keys.resume) }
-        if let d = try? encoder.encode(preferences)    { defaults.set(d, forKey: Keys.preferences) }
-        if let d = try? encoder.encode(savedJobs)      { defaults.set(d, forKey: Keys.savedJobs) }
+        if let d = try? encoder.encode(resume)          { defaults.set(d, forKey: Keys.resume) }
+        if let d = try? encoder.encode(preferences)     { defaults.set(d, forKey: Keys.preferences) }
+        if let d = try? encoder.encode(savedJobs)       { defaults.set(d, forKey: Keys.savedJobs) }
         if let d = try? encoder.encode(dismissedJobIds) { defaults.set(d, forKey: Keys.dismissed) }
         defaults.set(phase.rawValue, forKey: Keys.phase)
+
+        guard !apiKey.isEmpty else { return }
+        let snapshot = buildSession()
+        let key = apiKey
+        Task { try? await api.saveSession(snapshot, apiKey: key) }
+    }
+
+    // MARK: - Server Session
+
+    private func buildSession() -> UserSession {
+        UserSession(
+            phase: phase.rawValue,
+            resume: resume,
+            preferences: preferences,
+            savedJobs: savedJobs,
+            dismissedJobIds: Array(dismissedJobIds)
+        )
+    }
+
+    private func loadSessionFromServer() async {
+        let key = apiKey
+        guard !key.isEmpty else { return }
+        do {
+            guard let session = try await api.loadSession(apiKey: key) else { return }
+            applyServerSession(session)
+        } catch {
+            // Non-fatal: local state is still shown
+        }
+    }
+
+    private func applyServerSession(_ session: UserSession) {
+        // Restore resume if we don't have one locally
+        if resume == nil, let r = session.resume { resume = r }
+
+        // Restore preferences if local ones are empty
+        if preferences.jobTitles.isEmpty { preferences = session.preferences }
+
+        // Merge saved jobs (union, server wins for duplicates)
+        let existingIds = Set(savedJobs.map { $0.id })
+        let newJobs = session.savedJobs.filter { !existingIds.contains($0.id) }
+        savedJobs.append(contentsOf: newJobs)
+
+        // Union dismissed IDs
+        dismissedJobIds.formUnion(session.dismissedJobIds)
+
+        // Advance phase if server shows more progress
+        if let serverPhase = AppPhase(rawValue: session.phase),
+           serverPhase.order > phase.order {
+            phase = serverPhase
+        }
+
+        persistState()
     }
 
     private func loadPersistedState() {

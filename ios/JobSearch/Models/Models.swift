@@ -186,12 +186,32 @@ struct JobSearchData: Codable {
 
 // MARK: - App State
 
-enum AppPhase: String, Codable {
+enum AppPhase: String, Codable, CaseIterable {
     case onboarding
     case resumeUpload
     case resumeAnalysis
     case preferences
     case discovery
+
+    var order: Int {
+        switch self {
+        case .onboarding:     return 0
+        case .resumeUpload:   return 1
+        case .resumeAnalysis: return 2
+        case .preferences:    return 3
+        case .discovery:      return 4
+        }
+    }
+}
+
+// MARK: - User Session (server-synced)
+
+struct UserSession: Codable {
+    var phase: String
+    var resume: Resume?
+    var preferences: JobPreferences
+    var savedJobs: [SavedJob]
+    var dismissedJobIds: [String]
 }
 
 // MARK: - OpenAI Structures (for direct match scoring calls)
