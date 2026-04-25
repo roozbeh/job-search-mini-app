@@ -230,7 +230,7 @@ actor APIService {
     // MARK: - CV Analysis
 
     /// Run AI analysis on resume text. Returns extracted criteria + improvement suggestions.
-    func analyzeCV(text: String) async throws -> CVAnalysisData {
+    func analyzeCV(text: String, apiKey: String) async throws -> CVAnalysisData {
         let url = try makeURL("/api/cv/analyze")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -245,7 +245,7 @@ actor APIService {
     }
 
     /// Run detailed ATS scoring analysis on resume text.
-    func detailedReview(text: String) async throws -> DetailedReviewData {
+    func detailedReview(text: String, apiKey: String) async throws -> DetailedReviewData {
         let url = try makeURL("/api/cv/detailed-review")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"

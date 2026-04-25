@@ -80,8 +80,9 @@ final class AppViewModel: ObservableObject {
             loadingMessage = "Analyzing with AI…"
 
             // 2. Run parallel analysis + detailed review
-            async let analysisTask = api.analyzeCV(text: text)
-            async let reviewTask   = api.detailedReview(text: text)
+            let key = apiKey  // capture from auth.accessToken at this moment
+            async let analysisTask = api.analyzeCV(text: text, apiKey: key)
+            async let reviewTask   = api.detailedReview(text: text, apiKey: key)
             let (analysis, review) = try await (analysisTask, reviewTask)
 
             // 3. Merge into ResumeAnalysis

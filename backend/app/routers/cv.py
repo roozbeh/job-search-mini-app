@@ -86,6 +86,7 @@ async def parse_cv(cv: UploadFile = File(...)):
 @router.post("/analyze")
 async def analyze_cv(body: AnalyzeRequest):
     """Run AI analysis on résumé text. Returns extracted criteria + improvements."""
+    logger.info("analyze_cv: apiKey_len=%d cvText_len=%d", len(body.apiKey), len(body.cvText))
     system = """You are an expert CV and résumé reviewer — senior recruiter and hiring manager across multiple industries.
 
 Analyze the provided CV and return a JSON object with exactly this structure:
