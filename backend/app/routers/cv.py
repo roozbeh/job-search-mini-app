@@ -30,6 +30,13 @@ def _openai_client(api_key: str) -> AsyncOpenAI:
     return AsyncOpenAI(api_key=key, base_url=settings.agnic_llm_base)
 
 
+def _raise_ai_error(exc: Exception) -> None:
+    msg = str(exc)
+    if "expired" in msg or "invalid_api_key" in msg or "401" in msg:
+        raise HTTPException(status_code=401, detail="Agnic token expired — please sign in again")
+    raise HTTPException(status_code=502, detail=f"AI call failed: {exc}")
+
+
 async def _chat_json(api_key: str, system: str, user: str) -> dict:
     client = _openai_client(api_key)
     logger.info("Calling AI API at base_url=%s model=openai/gpt-4o", settings.agnic_llm_base)
@@ -110,9 +117,11 @@ Provide 3-5 distinct improvement suggestions prioritising high-impact issues."""
             system,
             f"Please analyse this CV:\n\n{body.cvText}",
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("AI analysis failed: %s: %s", type(e).__name__, e, exc_info=True)
-        raise HTTPException(status_code=502, detail=f"AI analysis failed: {e}")
+        _raise_ai_error(e)
 
     return {"status": "OK", "data": data}
 
@@ -155,8 +164,10 @@ Score breakdown maximums: parseability 25, keywordAlignment 30, formattingSimpli
             system,
             f"Please perform a detailed review and ATS evaluation for this CV:\n\n{body.cvText}",
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("AI detailed-review failed: %s: %s", type(e).__name__, e, exc_info=True)
-        raise HTTPException(status_code=502, detail=f"AI review failed: {e}")
+        _raise_ai_error(e)
 
     return {"status": "OK", "data": data}
