@@ -26,6 +26,10 @@ struct JobDiscoveryView: View {
             }
             .navigationTitle("Discover")
             .navigationBarTitleDisplayMode(.large)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                JourneyStepBar(currentStep: 4)
+                    .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 4) {
@@ -42,8 +46,11 @@ struct JobDiscoveryView: View {
             .navigationDestination(item: $selectedJob) { job in
                 JobDetailView(job: job)
             }
-            .sheet(isPresented: $showLoginSheet) {
+            .sheet(isPresented: $showLoginSheet, onDismiss: { vm.showLoginSheet = false }) {
                 AgnicLoginSheet()
+            }
+            .onChange(of: vm.showLoginSheet) { _, open in
+                if open { showLoginSheet = true }
             }
         }
     }

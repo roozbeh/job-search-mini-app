@@ -97,7 +97,6 @@ final class AppViewModel: ObservableObject {
             }
             if preferences.salaryMin == nil {
                 preferences.salaryMin = criteria.salaryRange.min
-                preferences.salaryMax = criteria.salaryRange.max
             }
 
             persistState()
@@ -150,6 +149,9 @@ final class AppViewModel: ObservableObject {
             // Eagerly compute match scores for the first 5 jobs in the background
             Task { await prefetchMatchScores(upTo: 5) }
 
+        } catch APIError.tokenExpired {
+            auth.logout()
+            showLoginSheet = true
         } catch {
             errorMessage = error.localizedDescription
         }

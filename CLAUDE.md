@@ -150,8 +150,14 @@ bash deploy.sh web    # build + deploy frontend only
 
 ### iOS
 - `ios/JobSearch.xcodeproj/project.pbxproj` — Hand-crafted Xcode project
-- `ios/JobSearch/Services/APIService.swift` — Backend URL: `https://jobsearch.ipronto.net`
-- `ios/JobSearch/Models/Models.swift` — `Job: Codable, Identifiable, Equatable, Hashable`
+- `ios/JobSearch/Services/APIService.swift` — Backend URL, Agnic OAuth PKCE, token validation, API calls
+- `ios/JobSearch/Models/Models.swift` — `Job`, `JobPreferences` (jobTypes: `Set<JobType>`, no salaryMax), `ResumeAnalysis`
+- `ios/JobSearch/ViewModels/AppViewModel.swift` — Central state, `showLoginSheet` for token expiry UX
+- `ios/JobSearch/Views/ContentView.swift` — Root view + `JourneyStepBar` (5-step progress bar) + `AgnicLoginSheet`
+- `ios/JobSearch/Views/Resume/ResumeUploadView.swift` — Step 1
+- `ios/JobSearch/Views/Resume/ResumeAnalysisView.swift` — Step 2 (ATS score, improvements, section feedback)
+- `ios/JobSearch/Views/Preferences/PreferencesView.swift` — Step 3 (multi-select job types, salary chip row)
+- `ios/JobSearch/Views/Discovery/JobDiscoveryView.swift` — Step 4 (swipeable job cards)
 - `ios/JobSearch/Assets.xcassets/AppIcon.appiconset/` — App icon from Gemini-generated PNG
 
 ---
@@ -176,20 +182,28 @@ bash deploy.sh web    # build + deploy frontend only
 }
 ```
 
+### Job Search Request (`/api/jobs/search`)
+```json
+{
+  "jobTitles": ["iOS Engineer"],
+  "locations": ["San Francisco"],
+  "isRemote": false,
+  "salaryMin": 120000,
+  "jobTypes": ["Full-time", "Contract"],
+  "apiKey": "<agnic_access_token>"
+}
+```
+`jobTypes` is multi-select array (empty = any). `apiKey` is the Agnic OAuth access_token.
+
 ### Job Object Format (matches iOS `Job` struct)
-Fields: `id`, `title`, `company`, `location`, `salary`, `jobType`, `description`, `requirements`, `postedDate`, `url`, `isRemote`, `experienceLevel`
+Fields: `id`, `title`, `company`, `location`, `salary`, `description`, `postedDate`, `applicationUrl`, `companyLogo`, `isRemote`, `employmentType`
 
 ---
 
 ## Pending Tasks
 
-1. **Apache config update on server**: Current config may proxy ALL traffic to FastAPI. Update to serve `dist/` as DocumentRoot and only proxy `/api/` paths. Use config above.
-
-2. **Server .env**: Create `/home/ubuntu/job-search-mini-app/backend/.env` with Atlas MongoDB URL if not done yet.
-
-3. **First full deploy**: Run `./deploy.sh` after Apache config is updated. The frontend (Figma UI from `src 2/`) has been copied into `src/` but hasn't been deployed yet.
-
-4. **Frontend build verification**: Run `npm install && npm run build` locally to confirm no TypeScript/import errors before deploying.
+1. **Step 5 "Apply" feature**: Journey bar shows 5 steps; step 5 (application tracking) UI/backend not built yet.
+2. **Frontend build verification**: Run `npm install && npm run build` locally to confirm no TypeScript/import errors before deploying web frontend.
 
 ---
 
@@ -201,6 +215,10 @@ Fields: `id`, `title`, `company`, `location`, `salary`, `jobType`, `description`
 - **iOS `Job` Hashable**: `navigationDestination(item:)` requires `Hashable`. Implemented via `hasher.combine(id)`.
 - **xcodebuild path**: Use `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild` if xcode-select points to CLT.
 - **Apache configtest with missing SSL cert**: Temporarily remove HTTPS VirtualHost, get cert via acme.sh, then restore.
+- **zsh plugin conflict on macOS**: `exec_scmb_expand_args: command not found: _safe_eval` — always use `bash -c '...'` or `bash deploy.sh`, never `./deploy.sh`.
+- **SourceKit false positives**: Cross-file type errors in editor are not real; trust `xcodebuild` output only.
+- **Agnic token expiry**: Backend returns 401 when OAuth token expires. iOS `APIService` throws `APIError.tokenExpired`; `AppViewModel` catches it, calls `auth.logout()`, sets `showLoginSheet = true`. Token is validated on app startup via `auth.validateStoredToken()`.
+- **Agnic OAuth flow**: iOS uses `ASWebAuthenticationSession` with PKCE. Callback scheme `jobsearch://`. Backend relay at `/api/oauth/callback` returns 302 → `jobsearch://oauth/callback?code=...`. The OAuth `access_token` IS the `apiKey` sent in all API requests (user-pays model).
 
 ---
 

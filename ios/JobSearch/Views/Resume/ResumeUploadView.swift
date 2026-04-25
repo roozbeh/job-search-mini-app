@@ -17,6 +17,9 @@ struct ResumeUploadView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 28) {
+                    JourneyStepBar(currentStep: 1)
+                        .padding(.top, 4)
+
                     // Header
                     VStack(spacing: 8) {
                         Image(systemName: "doc.text.fill")

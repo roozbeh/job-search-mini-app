@@ -11,6 +11,12 @@ struct PreferencesView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    JourneyStepBar(currentStep: 3)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
+
                 // MARK: Job Titles
                 Section {
                     ForEach(vm.preferences.jobTitles, id: \.self) { title in
@@ -67,38 +73,34 @@ struct PreferencesView: View {
                     Text("Work Style")
                 }
 
-                // MARK: Job Type
+                // MARK: Job Type (multi-select)
                 Section {
-                    Picker("Job Type", selection: $vm.preferences.jobType) {
-                        ForEach(JobPreferences.JobType.allCases) {
-                            Text($0.rawValue).tag($0)
+                    ForEach(JobPreferences.JobType.allCases) { type in
+                        Toggle(isOn: Binding(
+                            get: { vm.preferences.jobTypes.contains(type) },
+                            set: { checked in
+                                if checked { vm.preferences.jobTypes.insert(type) }
+                                else       { vm.preferences.jobTypes.remove(type) }
+                            }
+                        )) {
+                            Text(type.rawValue)
                         }
+                        .tint(.indigo)
                     }
-                    .pickerStyle(.menu)
                 } header: {
                     Label("Employment Type", systemImage: "clock.fill")
+                } footer: {
+                    Text("Select all that apply. Leave all off to include any type.")
                 }
 
-                // MARK: Salary
+                // MARK: Salary (minimum only, chip picker)
                 Section {
-                    SalaryRangeRow(
-                        label: "Minimum",
-                        value: Binding(
-                            get: { vm.preferences.salaryMin ?? 0 },
-                            set: { vm.preferences.salaryMin = $0 == 0 ? nil : $0 }
-                        )
-                    )
-                    SalaryRangeRow(
-                        label: "Maximum",
-                        value: Binding(
-                            get: { vm.preferences.salaryMax ?? 0 },
-                            set: { vm.preferences.salaryMax = $0 == 0 ? nil : $0 }
-                        )
-                    )
+                    SalaryChipRow(value: Binding(
+                        get: { vm.preferences.salaryMin ?? 0 },
+                        set: { vm.preferences.salaryMin = $0 == 0 ? nil : $0 }
+                    ))
                 } header: {
-                    Label("Salary Range (USD/year)", systemImage: "dollarsign.circle.fill")
-                } footer: {
-                    Text("Set to 0 to skip salary filtering.")
+                    Label("Minimum Salary (USD/year)", systemImage: "dollarsign.circle.fill")
                 }
             }
             .navigationTitle("Job Preferences")
@@ -154,30 +156,32 @@ struct PreferencesView: View {
     }
 }
 
-// MARK: - Salary Row
+// MARK: - Salary Chip Row
 
-struct SalaryRangeRow: View {
-    let label: String
+struct SalaryChipRow: View {
     @Binding var value: Int
 
+    private let presets = [0, 50_000, 80_000, 100_000, 120_000, 150_000, 200_000]
+
     var body: some View {
-        HStack {
-            Text(label)
-            Spacer()
-            if value > 0 {
-                Text(value, format: .currency(code: "USD").precision(.fractionLength(0)))
-                    .foregroundStyle(.primary)
-            } else {
-                Text("Any").foregroundStyle(.secondary)
-            }
-        }
-        .contentShape(Rectangle())
-        .contextMenu {
-            ForEach([0, 50_000, 80_000, 100_000, 120_000, 150_000, 180_000, 200_000], id: \.self) { amount in
-                Button(amount == 0 ? "Any" : amount.formatted(.currency(code: "USD").precision(.fractionLength(0)))) {
-                    value = amount
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(presets, id: \.self) { amount in
+                    let selected = value == amount
+                    Button(amount == 0 ? "Any" : "$\(amount / 1000)K+") {
+                        value = amount
+                    }
+                    .font(.subheadline.weight(selected ? .semibold : .regular))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(selected ? Color.indigo : Color(.systemGray5),
+                                in: Capsule())
+                    .foregroundStyle(selected ? .white : .primary)
+                    .animation(.easeInOut(duration: 0.15), value: selected)
                 }
             }
+            .padding(.vertical, 4)
         }
+        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 0))
     }
 }

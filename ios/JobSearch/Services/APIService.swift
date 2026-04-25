@@ -274,8 +274,7 @@ actor APIService {
             "locations": preferences.locations,
             "isRemote": preferences.isRemote,
             "salaryMin": preferences.salaryMin as Any,
-            "salaryMax": preferences.salaryMax as Any,
-            "jobType": preferences.jobType.rawValue,
+            "jobTypes": preferences.jobTypes.map { $0.rawValue },
             "resumeText": resumeText,
             "apiKey": apiKey
         ]

@@ -185,6 +185,61 @@ struct MainTabView: View {
     }
 }
 
+// MARK: - Journey Step Bar
+
+struct JourneyStepBar: View {
+    let currentStep: Int  // 1 = Resume, 2 = Analysis, 3 = Preferences, 4 = Matches, 5 = Apply
+
+    private let steps: [(icon: String, label: String)] = [
+        ("doc.text",        "Resume"),
+        ("sparkles",        "Analysis"),
+        ("slider.horizontal.3", "Prefs"),
+        ("briefcase",       "Matches"),
+        ("checkmark.circle","Apply"),
+    ]
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(steps.indices, id: \.self) { i in
+                let step  = i + 1
+                let done  = step < currentStep
+                let active = step == currentStep
+
+                VStack(spacing: 3) {
+                    ZStack {
+                        Circle()
+                            .fill(done || active ? Color.indigo : Color(.systemGray5))
+                            .frame(width: 28, height: 28)
+                        if done {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(.white)
+                        } else {
+                            Image(systemName: steps[i].icon)
+                                .font(.system(size: 11, weight: active ? .semibold : .regular))
+                                .foregroundStyle(active ? .white : .secondary)
+                        }
+                    }
+                    Text(steps[i].label)
+                        .font(.system(size: 9, weight: active ? .semibold : .regular))
+                        .foregroundStyle(active ? .indigo : .secondary)
+                }
+
+                if i < steps.count - 1 {
+                    Rectangle()
+                        .fill(done ? Color.indigo : Color(.systemGray4))
+                        .frame(height: 2)
+                        .frame(maxWidth: .infinity)
+                        .padding(.bottom, 14)
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(Color(.systemBackground))
+    }
+}
+
 // MARK: - Loading Overlay
 
 struct LoadingOverlay: View {

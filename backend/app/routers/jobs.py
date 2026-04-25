@@ -22,8 +22,8 @@ class JobSearchRequest(BaseModel):
     locations: list[str] = []
     isRemote: bool = False
     salaryMin: int | None = None
-    salaryMax: int | None = None
-    jobType: str = "Any"
+    jobTypes: list[str] = []   # multi-select; empty = any
+    jobType: str = "Any"       # legacy single-select fallback
     resumeText: str = ""
     apiKey: str
 
@@ -49,8 +49,10 @@ def _build_query(req: JobSearchRequest) -> str:
         parts.append("in " + " or ".join(req.locations))
     if req.isRemote:
         parts.append("remote")
-    if req.jobType and req.jobType != "Any":
-        parts.append(req.jobType)
+    # Prefer new multi-select jobTypes; fall back to legacy jobType
+    types = req.jobTypes or ([req.jobType] if req.jobType and req.jobType != "Any" else [])
+    if types:
+        parts.append(" OR ".join(types))
     return " ".join(parts) or "software engineer"
 
 

@@ -77,14 +77,12 @@ struct JobPreferences: Codable {
     var locations: [String] = []
     var isRemote: Bool = false
     var salaryMin: Int? = nil
-    var salaryMax: Int? = nil
-    var jobType: JobType = .any
+    var jobTypes: Set<JobType> = []
 
     enum JobType: String, Codable, CaseIterable, Identifiable {
-        case any = "Any"
-        case fullTime = "Full-time"
-        case partTime = "Part-time"
-        case contract = "Contract"
+        case fullTime   = "Full-time"
+        case partTime   = "Part-time"
+        case contract   = "Contract"
         case internship = "Internship"
 
         var id: String { rawValue }

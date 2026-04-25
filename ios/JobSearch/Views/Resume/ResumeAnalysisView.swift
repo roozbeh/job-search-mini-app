@@ -16,6 +16,8 @@ struct ResumeAnalysisView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
+                    JourneyStepBar(currentStep: 2)
+
                     // ATS Score Card
                     if let analysis = analysis {
                         ATSScoreCard(score: analysis.atsScore, summary: analysis.summary)
