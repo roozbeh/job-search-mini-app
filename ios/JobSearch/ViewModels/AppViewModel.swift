@@ -51,13 +51,19 @@ final class AppViewModel: ObservableObject {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.reconfigureService() }
             .store(in: &cancellables)
-        // When user logs in (token appears), load their session and advance past onboarding
+        // Track login state changes
         auth.$isLoggedIn
             .receive(on: RunLoop.main)
             .removeDuplicates()
             .sink { [weak self] loggedIn in
-                guard let self, loggedIn else { return }
-                Task { await self.loadSessionFromServer() }
+                guard let self else { return }
+                if loggedIn {
+                    Task { await self.loadSessionFromServer() }
+                } else {
+                    // Token expired or user signed out — always return to sign-in
+                    self.phase = .onboarding
+                    self.defaults.set(AppPhase.onboarding.rawValue, forKey: Keys.phase)
+                }
             }
             .store(in: &cancellables)
         Task {
