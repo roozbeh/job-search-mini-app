@@ -113,6 +113,7 @@ final class AppViewModel: ObservableObject {
 
             persistState()
             phase = .resumeAnalysis
+            Task { await auth.refreshBalance() }
 
         } catch APIError.tokenExpired {
             auth.logout()

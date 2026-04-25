@@ -3,6 +3,24 @@ import UIKit
 import AuthenticationServices
 import CryptoKit
 
+// MARK: - Balance
+
+struct AgnicBalance {
+    let creditBalance: Double
+    var displayUSD: String { String(format: "$%.2f", creditBalance) }
+
+    private static func parseDouble(_ v: Any?) -> Double? {
+        if let d = v as? Double { return d }
+        if let s = v as? String { return Double(s) }
+        return nil
+    }
+
+    static func parse(_ json: [String: Any]) -> AgnicBalance? {
+        let credit = parseDouble(json["creditBalance"]) ?? parseDouble(json["usdcBalance"]) ?? 0
+        return AgnicBalance(creditBalance: credit)
+    }
+}
+
 // MARK: - Agnic OAuth (PKCE)
 
 @MainActor
@@ -14,6 +32,7 @@ final class AgnicAuthService: NSObject, ObservableObject {
     @Published var accessToken: String? = nil
     @Published var isLoggingIn = false
     @Published var loginError: String? = nil
+    @Published var balance: AgnicBalance? = nil
 
     private let clientId    = "app_8e1104734685043d152d6184"
     private let authURL     = URL(string: "https://api.agnic.ai/oauth/authorize")!
@@ -33,16 +52,29 @@ final class AgnicAuthService: NSObject, ObservableObject {
         }
     }
 
-    /// Validate stored token against Agnic; logout if expired. Call on app startup.
+    /// Validate stored token against Agnic; logout if expired. Also updates balance.
     func validateStoredToken() async {
         guard let token = accessToken else { return }
         var req = URLRequest(url: balanceURL, timeoutInterval: 10)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        guard let (_, resp) = try? await URLSession.shared.data(for: req),
+        guard let (data, resp) = try? await URLSession.shared.data(for: req),
               (resp as? HTTPURLResponse)?.statusCode != 401 else {
             logout()
             return
         }
+        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            balance = AgnicBalance.parse(json)
+        }
+    }
+
+    /// Refresh balance in the background (call after significant activity).
+    func refreshBalance() async {
+        guard let token = accessToken else { return }
+        var req = URLRequest(url: balanceURL, timeoutInterval: 10)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+        balance = AgnicBalance.parse(json)
     }
 
     func login() async {
@@ -86,6 +118,7 @@ final class AgnicAuthService: NSObject, ObservableObject {
             isLoggedIn  = true
             loginError  = nil
             UserDefaults.standard.set(token, forKey: tokenKey)
+            await refreshBalance()
         } catch let err as ASWebAuthenticationSessionError where err.code == .canceledLogin {
             // User tapped Cancel — no error message needed
         } catch {

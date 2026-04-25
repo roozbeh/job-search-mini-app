@@ -120,22 +120,45 @@ struct UserIconButton: View {
     }
 }
 
+// MARK: - Balance Pill (compact credit display for toolbar)
+
+struct BalancePill: View {
+    @EnvironmentObject var vm: AppViewModel
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "dollarsign.circle.fill")
+                .foregroundStyle(.green)
+                .font(.system(size: 13))
+            Text(vm.auth.balance?.displayUSD ?? "—")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.primary)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Color(.systemGray6), in: Capsule())
+    }
+}
+
 // MARK: - Account Menu Button (for screens where user is always logged in)
 
 struct AccountMenuButton: View {
     @EnvironmentObject var vm: AppViewModel
 
     var body: some View {
-        Menu {
-            Button(role: .destructive) {
-                vm.auth.logout()
-                vm.phase = .onboarding
+        HStack(spacing: 8) {
+            BalancePill()
+            Menu {
+                Button(role: .destructive) {
+                    vm.auth.logout()
+                    vm.phase = .onboarding
+                } label: {
+                    Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                }
             } label: {
-                Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                Image(systemName: "person.crop.circle.fill")
+                    .foregroundStyle(.indigo)
             }
-        } label: {
-            Image(systemName: "person.crop.circle.fill")
-                .foregroundStyle(.indigo)
         }
     }
 }
