@@ -1,4 +1,5 @@
 import json
+import logging
 from io import BytesIO
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
@@ -7,6 +8,8 @@ from pydantic import BaseModel
 from pypdf import PdfReader
 
 from ..config import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -29,6 +32,7 @@ def _openai_client(api_key: str) -> AsyncOpenAI:
 
 async def _chat_json(api_key: str, system: str, user: str) -> dict:
     client = _openai_client(api_key)
+    logger.info("Calling AI API at base_url=%s model=openai/gpt-4o", settings.agnic_llm_base)
     resp = await client.chat.completions.create(
         model="openai/gpt-4o",
         messages=[
@@ -107,6 +111,7 @@ Provide 3-5 distinct improvement suggestions prioritising high-impact issues."""
             f"Please analyse this CV:\n\n{body.cvText}",
         )
     except Exception as e:
+        logger.error("AI analysis failed: %s: %s", type(e).__name__, e, exc_info=True)
         raise HTTPException(status_code=502, detail=f"AI analysis failed: {e}")
 
     return {"status": "OK", "data": data}
@@ -151,6 +156,7 @@ Score breakdown maximums: parseability 25, keywordAlignment 30, formattingSimpli
             f"Please perform a detailed review and ATS evaluation for this CV:\n\n{body.cvText}",
         )
     except Exception as e:
+        logger.error("AI detailed-review failed: %s: %s", type(e).__name__, e, exc_info=True)
         raise HTTPException(status_code=502, detail=f"AI review failed: {e}")
 
     return {"status": "OK", "data": data}
