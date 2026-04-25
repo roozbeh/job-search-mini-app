@@ -51,6 +51,15 @@ final class AppViewModel: ObservableObject {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.reconfigureService() }
             .store(in: &cancellables)
+        // When user logs in (token appears), load their session and advance past onboarding
+        auth.$isLoggedIn
+            .receive(on: RunLoop.main)
+            .removeDuplicates()
+            .sink { [weak self] loggedIn in
+                guard let self, loggedIn else { return }
+                Task { await self.loadSessionFromServer() }
+            }
+            .store(in: &cancellables)
         Task {
             await auth.validateStoredToken()
             if auth.isLoggedIn { await loadSessionFromServer() }
@@ -302,11 +311,14 @@ final class AppViewModel: ObservableObject {
         let key = apiKey
         guard !key.isEmpty else { return }
         do {
-            guard let session = try await api.loadSession(apiKey: key) else { return }
-            applyServerSession(session)
+            if let session = try await api.loadSession(apiKey: key) {
+                applyServerSession(session)
+            }
         } catch {
             // Non-fatal: local state is still shown
         }
+        // Always advance past onboarding once logged in
+        if phase == .onboarding { phase = .resumeUpload }
     }
 
     private func applyServerSession(_ session: UserSession) {

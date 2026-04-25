@@ -103,7 +103,7 @@ struct AgnicLoginSheet: View {
     }
 }
 
-// MARK: - User Icon Button (reusable toolbar item)
+// MARK: - User Icon Button (reusable toolbar item — passes showLogin binding)
 
 struct UserIconButton: View {
     @EnvironmentObject var vm: AppViewModel
@@ -116,6 +116,26 @@ struct UserIconButton: View {
                   : "person.crop.circle")
                 .foregroundStyle(vm.auth.isLoggedIn ? .indigo : .secondary)
                 .symbolEffect(.bounce, value: vm.auth.isLoggedIn)
+        }
+    }
+}
+
+// MARK: - Account Menu Button (for screens where user is always logged in)
+
+struct AccountMenuButton: View {
+    @EnvironmentObject var vm: AppViewModel
+
+    var body: some View {
+        Menu {
+            Button(role: .destructive) {
+                vm.auth.logout()
+                vm.phase = .onboarding
+            } label: {
+                Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+            }
+        } label: {
+            Image(systemName: "person.crop.circle.fill")
+                .foregroundStyle(.indigo)
         }
     }
 }
