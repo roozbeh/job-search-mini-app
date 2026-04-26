@@ -91,10 +91,28 @@ async def _set_cached(query: str, jobs: list[dict]) -> None:
         pass
 
 
-async def _agnic_fetch(url: str, api_key: str) -> Any:
+async def _search_serpapi(query: str) -> list[dict]:
+    if not settings.serpapi_key:
+        raise HTTPException(status_code=500, detail="SERPAPI_KEY not configured on server")
+    logger.info("serpapi search query=%s", query)
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.get(
+            "https://serpapi.com/search.json",
+            params={"engine": "google_jobs", "q": query, "api_key": settings.serpapi_key},
+        )
+    if resp.status_code == 401:
+        raise HTTPException(status_code=500, detail="SerpAPI key invalid or expired")
+    resp.raise_for_status()
+    data = resp.json()
+    raw_jobs = data.get("jobs_results", [])
+    return [_normalize_serpapi_job(j) for j in raw_jobs]
+
+
+async def _search_agnic(query: str, api_key: str) -> list[dict]:
     effective_key = api_key or settings.agnicpay_api_key
     if not effective_key:
-        raise HTTPException(status_code=500, detail="No API key configured on server")
+        raise HTTPException(status_code=500, detail="No Agnic API key configured")
+    url = f"{settings.agnic_job_search_base}/search?query={httpx.URL(query)}"
     proxy_url = f"{settings.agnic_fetch_proxy}?url={httpx.URL(url)}"
     logger.info("agnic_fetch url=%s key_source=%s", url, "user" if api_key else "server")
     async with httpx.AsyncClient(timeout=30) as client:
@@ -106,7 +124,36 @@ async def _agnic_fetch(url: str, api_key: str) -> Any:
         logger.warning("agnic_fetch 401 from proxy url=%s", url)
         raise HTTPException(status_code=401, detail="Agnic token expired — please sign in again")
     resp.raise_for_status()
-    return resp.json()
+    raw_jobs = _extract_jobs(resp.json())
+    return [_normalize_job(j) for j in raw_jobs]
+
+
+async def _search_jobs(query: str, api_key: str) -> list[dict]:
+    provider = settings.job_search_provider.lower()
+    logger.info("job_search provider=%s query=%s", provider, query)
+    if provider == "serpapi":
+        return await _search_serpapi(query)
+    if provider == "agnic":
+        return await _search_agnic(query, api_key)
+    raise HTTPException(status_code=500, detail=f"Unknown JOB_SEARCH_PROVIDER: {provider}")
+
+
+def _normalize_serpapi_job(raw: dict) -> dict:
+    detected = raw.get("detected_extensions", {})
+    salary = detected.get("salary")
+    return {
+        "id": raw.get("job_id", raw.get("title", "") + raw.get("company_name", "")),
+        "title": raw.get("title", ""),
+        "company": raw.get("company_name", ""),
+        "location": raw.get("location", ""),
+        "salary": salary,
+        "description": raw.get("description"),
+        "postedDate": detected.get("posted_at"),
+        "applicationUrl": (raw.get("apply_options") or [{}])[0].get("link"),
+        "companyLogo": raw.get("thumbnail"),
+        "isRemote": "remote" in raw.get("location", "").lower(),
+        "employmentType": detected.get("schedule_type"),
+    }
 
 
 def _normalize_job(raw: dict) -> dict:
@@ -189,16 +236,14 @@ async def search_jobs(body: JobSearchRequest):
     if cached is not None:
         return {"status": "OK", "data": {"jobs": cached}}
 
-    target_url = f"{settings.agnic_job_search_base}/search?query={httpx.URL(query)}"
     try:
-        raw_data = await _agnic_fetch(target_url, body.apiKey)
+        jobs = await _search_jobs(query, body.apiKey)
+    except HTTPException:
+        raise
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail="Job search upstream error")
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Job search failed: {e}")
-
-    raw_jobs = _extract_jobs(raw_data)
-    jobs = [_normalize_job(j) for j in raw_jobs]
 
     await _set_cached(query, jobs)
     return {"status": "OK", "data": {"jobs": jobs}}

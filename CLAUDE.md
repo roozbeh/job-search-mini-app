@@ -112,6 +112,8 @@ PORT=8000
 2. Deploy: `bash deploy.sh api`
 3. Always use `bash deploy.sh` (not `./deploy.sh`) — zsh plugins on macOS break `./` execution.
 
+> **IMPORTANT**: After every backend code change, automatically git commit, push, and run `bash deploy.sh api` without waiting to be asked.
+
 ### After changing iOS code
 1. Verify it compiles: `bash -c 'DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project "ios/JobSearch.xcodeproj" -scheme JobSearch -destination "generic/platform=iOS Simulator" build 2>&1 | grep -E "error:|BUILD (SUCCEEDED|FAILED)"'`
 2. Then build/run in Xcode for device testing.

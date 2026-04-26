@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     agnic_fetch_proxy: str = "https://api.agnic.ai/api/x402/fetch"
     agnicpay_api_key: str = ""
 
+    # Job search provider: "serpapi" | "agnic"
+    job_search_provider: str = "serpapi"
+    serpapi_key: str = ""
+
     port: int = 8000
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
