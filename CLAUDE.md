@@ -100,8 +100,13 @@ AGNIC_LLM_BASE=https://api.agnic.ai/v1
 AGNIC_JOB_SEARCH_BASE=https://api.agnic.ai/v1/custom/job-search
 AGNIC_FETCH_PROXY=https://api.agnic.ai/api/x402/fetch
 PORT=8000
+
+# Job search provider (switchable without code changes)
+JOB_SEARCH_PROVIDER=serpapi   ← currently active provider
+SERPAPI_KEY=<user must set>   ← required when JOB_SEARCH_PROVIDER=serpapi
 ```
 > The app runs in **user-pays mode**: each user's Agnic OAuth token is the API key. `AGNICPAY_API_KEY` is optional as a server-side fallback but is currently empty on the server.
+> **Job search is server-pays**: SerpAPI key is a server-side key, not per-user. Free tier = 250 searches/month.
 
 ---
 
@@ -136,7 +141,7 @@ bash deploy.sh web    # build + deploy frontend only
 - `backend/app/main.py` — FastAPI app, `logging.basicConfig(level=logging.INFO)` set
 - `backend/app/database.py` — Motor client with `connect=False, maxPoolSize=10`
 - `backend/app/routers/cv.py` — CV parse/analyze/detailed-review; logs `apiKey_len` on each call
-- `backend/app/routers/jobs.py` — Job search with MongoDB cache (6hr TTL); fallback to server API key
+- `backend/app/routers/jobs.py` — Job search with MongoDB cache (6hr TTL); provider-switchable via `JOB_SEARCH_PROVIDER` env var; dispatches to `_search_serpapi()` or `_search_agnic()`
 - `backend/app/routers/session.py` — User session save/load (keyed by SHA256 of token)
 - `backend/requirements.txt` — No pinned pymongo (motor 3.6.0 requires pymongo<4.10)
 - `backend/docker-compose.yml` — Single `api` service, ulimits + `seccomp=unconfined`
@@ -215,9 +220,10 @@ The iOS captures `auth.accessToken` explicitly at call time (not from actor-stor
 ## Pending Tasks
 
 1. **Step 5 "Apply" feature**: Journey bar shows 5 steps; step 5 (application tracking) UI/backend not built yet.
-2. **Server AGNICPAY_API_KEY**: Currently empty in `.env`. If the user's token ever expires mid-request, there's no server fallback. Consider adding a server-side Agnic API key.
+2. **SERPAPI_KEY on server**: Must be added manually to `/home/ubuntu/job-search-mini-app/backend/.env` — cannot be deployed via git. Job search returns 500 until this is set.
 3. **Session key stability**: Session is keyed by SHA256 of the OAuth token. A new login (new token) creates a new session. Future: use Agnic wallet address as stable user ID.
 4. **Frontend build verification**: Run `npm install && npm run build` locally before deploying web frontend.
+5. **Job search provider experimentation**: Currently using SerpAPI (250 free req/month). Other candidates: JSearch/RapidAPI (200 free/month), Adzuna (250/day free). Switch via `JOB_SEARCH_PROVIDER` in `.env` + add `_search_<provider>()` in `jobs.py`.
 
 ---
 
@@ -233,7 +239,9 @@ The iOS captures `auth.accessToken` explicitly at call time (not from actor-stor
 - **apiKey empty → 500**: If `AppViewModel.apiKey` is read before `auth.accessToken` is set, backend gets empty key → HTTP 500. Fixed by: (1) passing apiKey explicitly at call time, (2) resetting phase to `.onboarding` whenever `auth.isLoggedIn` becomes false.
 - **Agnic OAuth flow**: iOS uses `ASWebAuthenticationSession` with PKCE. Callback scheme `jobsearch://`. Backend relay at `/api/oauth/callback` returns 302 → `jobsearch://oauth/callback?code=...`. The OAuth `access_token` IS the `apiKey` sent in all API requests (user-pays model).
 - **Token expiry → phase stuck**: If stored token is expired at startup, `validateStoredToken()` logs out. The `auth.$isLoggedIn` subscriber in AppViewModel now detects `loggedIn=false` and resets phase to `.onboarding`. Without this, the user could reach upload screen with an empty token.
-- **Job search 401**: `_agnic_fetch` in jobs.py now falls back to `settings.agnicpay_api_key` if user key is empty. Agnic 401 re-raised as HTTP 401 (not 502) so iOS shows sign-in prompt.
+- **Job search 401/502**: Agnic x402/fetch proxy returns 401 for user OAuth tokens on the job-search custom endpoint — it requires a separate paid credential. Replaced with SerpAPI provider. `HTTPException` from `_search_*` functions must be re-raised (not caught by generic `except Exception`) to avoid masking 401 as 502.
+- **src/ and src 2/ use mock jobs only**: Neither web frontend ever called a real job search API. All job search is handled by the backend + external provider.
+- **Job search is provider-switchable**: Set `JOB_SEARCH_PROVIDER=serpapi|agnic` in `.env`. Add new providers as `_search_<name>()` in `jobs.py` + new branch in `_search_jobs()`.
 
 ---
 
