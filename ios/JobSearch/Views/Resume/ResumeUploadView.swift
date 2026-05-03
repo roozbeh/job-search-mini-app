@@ -89,7 +89,7 @@ struct ResumeUploadView: View {
                     HStack(alignment: .top, spacing: 10) {
                         Image(systemName: "lock.shield.fill")
                             .foregroundStyle(.green)
-                        Text("Your resume and job preferences are securely saved to your JobSearch account so you can continue where you left off.")
+                        Text("Your resume and job preferences are securely saved to your ResuMatch account so you can continue where you left off.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

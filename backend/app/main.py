@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="JobSearch API",
+    title="ResuMatch API",
     version="1.0.0",
     lifespan=lifespan,
     docs_url="/api/docs",
