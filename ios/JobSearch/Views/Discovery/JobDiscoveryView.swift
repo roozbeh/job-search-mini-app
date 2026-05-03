@@ -2,6 +2,7 @@ import SwiftUI
 
 struct JobDiscoveryView: View {
     @EnvironmentObject var vm: AppViewModel
+    @Binding var selectedTab: MainTabView.Tab
     @State private var selectedJob: Job? = nil
     @State private var showNewSearch = false
 
@@ -146,11 +147,24 @@ struct JobDiscoveryView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
-            Button("Update Preferences") {
-                vm.phase = .preferences
+            VStack(spacing: 12) {
+                if !vm.savedJobs.isEmpty {
+                    Button("View Saved Jobs") {
+                        selectedTab = .saved
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.indigo, in: RoundedRectangle(cornerRadius: 14))
+                    .foregroundStyle(.white)
+                }
+                Button("Update Preferences") {
+                    vm.phase = .preferences
+                }
+                .buttonStyle(.bordered)
+                .tint(.indigo)
             }
-            .buttonStyle(.bordered)
-            .tint(.indigo)
+            .padding(.horizontal, 32)
         }
     }
 
@@ -170,14 +184,25 @@ struct JobDiscoveryView: View {
                 .padding(.horizontal, 40)
 
             VStack(spacing: 12) {
+                if !vm.savedJobs.isEmpty {
+                    Button("View Saved Jobs") {
+                        selectedTab = .saved
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.indigo, in: RoundedRectangle(cornerRadius: 14))
+                    .foregroundStyle(.white)
+                }
+
                 Button("Search Again") {
                     Task { await vm.startJobSearch() }
                 }
                 .font(.headline)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.indigo, in: RoundedRectangle(cornerRadius: 14))
-                .foregroundStyle(.white)
+                .background(vm.savedJobs.isEmpty ? Color.indigo : Color(.systemGray5), in: RoundedRectangle(cornerRadius: 14))
+                .foregroundStyle(vm.savedJobs.isEmpty ? .white : Color.primary)
 
                 Button("Update Preferences First") {
                     vm.phase = .preferences

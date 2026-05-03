@@ -211,7 +211,7 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            JobDiscoveryView()
+            JobDiscoveryView(selectedTab: $selectedTab)
                 .tabItem { Label("Discover", systemImage: "sparkles") }
                 .tag(Tab.discover)
 

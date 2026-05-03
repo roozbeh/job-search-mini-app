@@ -199,14 +199,12 @@ final class AppViewModel: ObservableObject {
     }
 
     private func advanceToNextJob() {
-        if currentJobIndex < discoveryJobs.count - 1 {
-            currentJobIndex += 1
-            // Pre-fetch match score for the job after next
-            let prefetchIndex = currentJobIndex + 4
-            if prefetchIndex < discoveryJobs.count {
-                let job = discoveryJobs[prefetchIndex]
-                Task { await fetchMatchScore(for: job) }
-            }
+        currentJobIndex += 1
+        // Pre-fetch match score for the job after next
+        let prefetchIndex = currentJobIndex + 4
+        if prefetchIndex < discoveryJobs.count {
+            let job = discoveryJobs[prefetchIndex]
+            Task { await fetchMatchScore(for: job) }
         }
     }
 
@@ -229,7 +227,7 @@ final class AppViewModel: ObservableObject {
                 savedJobs[si].job.matchGuidance = guidance
             }
         } catch {
-            // Non-fatal: match score is nice-to-have, not blocking
+            print("[MatchScore] failed for \(job.title): \(error)")
         }
     }
 

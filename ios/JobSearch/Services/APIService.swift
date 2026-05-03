@@ -374,15 +374,15 @@ actor APIService {
         \(description.prefix(2000))
         """
 
-        let requestBody = OpenAIRequest(
-            model: "gpt-4o",
-            messages: [
-                OpenAIMessage(role: "system", content: systemPrompt),
-                OpenAIMessage(role: "user", content: userPrompt)
+        let body: [String: Any] = [
+            "model": "openai/gpt-4o-mini",
+            "messages": [
+                ["role": "system", "content": systemPrompt],
+                ["role": "user", "content": userPrompt]
             ],
-            responseFormat: .init(type: "json_object"),
-            temperature: 0.3
-        )
+            "temperature": 0.3,
+            "max_tokens": 1024
+        ]
 
         // Route through AgnicPay proxy (same as the web app)
         let url = URL(string: "https://api.agnic.ai/v1/chat/completions")!
@@ -390,17 +390,28 @@ actor APIService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.httpBody = try JSONEncoder().encode(requestBody)
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, httpResponse) = try await URLSession.shared.data(for: request)
         if let http = httpResponse as? HTTPURLResponse, http.statusCode != 200 {
-            throw APIError.serverError("OpenAI returned HTTP \(http.statusCode)")
+            let responseStr = String(data: data, encoding: .utf8) ?? "no body"
+            throw APIError.serverError("Match score HTTP \(http.statusCode): \(responseStr)")
         }
 
         let openAIResponse = try JSONDecoder().decode(OpenAIResponse.self, from: data)
-        guard let content = openAIResponse.choices.first?.message.content,
-              let jsonData = content.data(using: .utf8) else {
-            throw APIError.decodingFailed("Empty content from OpenAI")
+        guard let content = openAIResponse.choices.first?.message.content else {
+            throw APIError.decodingFailed("Empty content from match score API")
+        }
+
+        // Extract JSON block from response (model may wrap it in markdown)
+        let jsonString: String
+        if let start = content.range(of: "{"), let end = content.range(of: "}", options: .backwards) {
+            jsonString = String(content[start.lowerBound...end.upperBound])
+        } else {
+            jsonString = content
+        }
+        guard let jsonData = jsonString.data(using: .utf8) else {
+            throw APIError.decodingFailed("Could not encode match score response")
         }
 
         return try JSONDecoder().decode(MatchGuidance.self, from: jsonData)
