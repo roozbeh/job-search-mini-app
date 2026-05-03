@@ -41,32 +41,25 @@ Location: `/etc/apache2/sites-available/jobsearch.ipronto.net.conf`
 
 ```apache
 <VirtualHost *:80>
+    ServerAdmin info@ipronto.net
     ServerName jobsearch.ipronto.net
-    DocumentRoot /home/ubuntu/job-search-mini-app/dist
-
-    <Directory /home/ubuntu/job-search-mini-app/dist>
-        Options -Indexes +FollowSymLinks
-        AllowOverride All
-        Require all granted
-    </Directory>
 
     ProxyPreserveHost On
-    ProxyPass /api/ http://localhost:8001/api/
-    ProxyPassReverse /api/ http://localhost:8001/api/
+    ProxyPass /.well-known/acme-challenge/ !
+    ProxyPass / http://127.0.0.1:8001/
 
-    RewriteEngine On
-    RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
-    RewriteRule ^ /index.html [L]
+    RewriteEngine on
+    RewriteCond %{REQUEST_URI} !^/.well-known/acme-challenge/
+    RewriteCond %{SERVER_NAME} =jobsearch.ipronto.net
+    RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
 </VirtualHost>
 
+<IfModule mod_ssl.c>
 <VirtualHost *:443>
+    ServerAdmin info@ipronto.net
     ServerName jobsearch.ipronto.net
-    DocumentRoot /home/ubuntu/job-search-mini-app/dist
 
-    SSLEngine on
-    SSLCertificateFile /home/ubuntu/.acme.sh/jobsearch.ipronto.net_ecc/jobsearch.ipronto.net.cer
-    SSLCertificateKeyFile /home/ubuntu/.acme.sh/jobsearch.ipronto.net_ecc/jobsearch.ipronto.net.key
-    SSLCertificateChainFile /home/ubuntu/.acme.sh/jobsearch.ipronto.net_ecc/fullchain.cer
+    DocumentRoot /home/ubuntu/job-search-mini-app/dist
 
     <Directory /home/ubuntu/job-search-mini-app/dist>
         Options -Indexes +FollowSymLinks
@@ -75,13 +68,19 @@ Location: `/etc/apache2/sites-available/jobsearch.ipronto.net.conf`
     </Directory>
 
     ProxyPreserveHost On
-    ProxyPass /api/ http://localhost:8001/api/
-    ProxyPassReverse /api/ http://localhost:8001/api/
+    ProxyPass /api/ http://127.0.0.1:8001/api/
+    ProxyPassReverse /api/ http://127.0.0.1:8001/api/
 
     RewriteEngine On
     RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
+    RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-d
     RewriteRule ^ /index.html [L]
+
+    SSLCertificateFile /etc/letsencrypt/live/jobsearch.ipronto.net/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/jobsearch.ipronto.net/privkey.pem
+    Include /etc/letsencrypt/options-ssl-apache.conf
 </VirtualHost>
+</IfModule>
 ```
 
 ### SSL Cert (acme.sh)
@@ -227,6 +226,16 @@ The iOS captures `auth.accessToken` explicitly at call time (not from actor-stor
 
 ---
 
+## Agnic API Model Names
+
+Agnic uses a namespaced `provider/model` format. Confirmed working:
+- `"openai/gpt-4o"` — used by backend `cv.py` for resume analysis (capable, costly)
+- `"openai/gpt-4o-mini"` — used by iOS `APIService.computeMatchScore` for resume-job match (fast, cheap, ~30× less than gpt-4o)
+
+When adding new LLM calls, use this `provider/model` format. Gemini models may work as `"google/gemini-2.0-flash"` but unconfirmed.
+
+---
+
 ## Known Issues & Fixes
 
 - **pymongo conflict**: `motor==3.6.0` requires `pymongo<4.10`. Do NOT pin pymongo in requirements.txt.
@@ -242,6 +251,10 @@ The iOS captures `auth.accessToken` explicitly at call time (not from actor-stor
 - **Job search 401/502**: Agnic x402/fetch proxy returns 401 for user OAuth tokens on the job-search custom endpoint — it requires a separate paid credential. Replaced with SerpAPI provider. `HTTPException` from `_search_*` functions must be re-raised (not caught by generic `except Exception`) to avoid masking 401 as 502.
 - **src/ and src 2/ use mock jobs only**: Neither web frontend ever called a real job search API. All job search is handled by the backend + external provider.
 - **Job search is provider-switchable**: Set `JOB_SEARCH_PROVIDER=serpapi|agnic` in `.env`. Add new providers as `_search_<name>()` in `jobs.py` + new branch in `_search_jobs()`.
+- **advanceToNextJob off-by-one (fixed)**: Was `if currentJobIndex < discoveryJobs.count - 1` — last card never advanced. Fixed to always increment `currentJobIndex` unconditionally; the view's `vm.currentJobIndex >= vm.discoveryJobs.count` check handles the "all done" state.
+- **computeMatchScore (fixed)**: Was using `model: "gpt-4o"` (wrong format) with `response_format: json_object` (unsupported by Agnic/Claude). Fixed to use `"openai/gpt-4o-mini"` with no `response_format`; JSON is extracted from raw text response (handles markdown wrapping). Errors now logged via `print("[MatchScore] failed for ...")` instead of silently swallowed.
+- **computeMatchScore call style**: Uses `JSONSerialization` dict (not `OpenAIRequest` Codable struct) to avoid sending unsupported fields. Response parsed via `OpenAIResponse` then JSON extracted with brace-range search before `JSONDecoder().decode(MatchGuidance.self, ...)`.
+- **caveman plugin node error**: The caveman Claude Code plugin requires Node.js installed. Error `SessionStart hook error: /bin/sh: node: command not found` means Node is not installed. Fix: `brew install node`.
 
 ---
 
