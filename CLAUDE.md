@@ -72,6 +72,7 @@ Location: `/etc/apache2/sites-available/jobsearch.ipronto.net.conf`
     ProxyPassReverse /api/ http://127.0.0.1:8001/api/
 
     RewriteEngine On
+    RewriteCond %{REQUEST_URI} !^/api/
     RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
     RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-d
     RewriteRule ^ /index.html [L]
