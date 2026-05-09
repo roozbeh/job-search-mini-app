@@ -19,6 +19,10 @@ class SaveSessionRequest(BaseModel):
     session: dict[str, Any]
 
 
+class DeleteSessionRequest(BaseModel):
+    apiKey: str
+
+
 def _session_key(api_key: str) -> str:
     return hashlib.sha256(api_key.encode()).hexdigest()
 
@@ -46,4 +50,12 @@ async def save_session(body: SaveSessionRequest):
         },
         upsert=True,
     )
+    return {"status": "OK"}
+
+
+@router.post("/delete")
+async def delete_session(body: DeleteSessionRequest):
+    db = get_db()
+    key = _session_key(body.apiKey)
+    await db.user_sessions.delete_one({"_id": key})
     return {"status": "OK"}

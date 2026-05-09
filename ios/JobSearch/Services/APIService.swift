@@ -448,6 +448,17 @@ actor APIService {
         let _: SaveResponse = try await perform(request)
     }
 
+    func deleteSession(apiKey: String) async throws {
+        let url = try makeURL("/api/session/delete")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(["apiKey": apiKey])
+
+        struct DeleteResponse: Codable { let status: String }
+        let _: DeleteResponse = try await perform(request)
+    }
+
     // MARK: - Private Helpers
 
     private func makeURL(_ path: String) throws -> URL {

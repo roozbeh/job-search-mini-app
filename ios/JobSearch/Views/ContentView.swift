@@ -5,6 +5,7 @@ import SwiftUI
 struct AgnicLoginSheet: View {
     @EnvironmentObject var vm: AppViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var showDeleteConfirm = false
 
     var body: some View {
         NavigationStack {
@@ -49,6 +50,30 @@ struct AgnicLoginSheet: View {
                         }
                         .buttonStyle(.bordered)
                         .padding(.horizontal)
+
+                        Button(role: .destructive) {
+                            showDeleteConfirm = true
+                        } label: {
+                            Text("Delete Account")
+                                .font(.subheadline)
+                                .foregroundStyle(.red)
+                        }
+                        .padding(.top, 4)
+                    }
+                    .confirmationDialog(
+                        "Delete Account",
+                        isPresented: $showDeleteConfirm,
+                        titleVisibility: .visible
+                    ) {
+                        Button("Delete My Data", role: .destructive) {
+                            Task {
+                                await vm.deleteAccount()
+                                dismiss()
+                            }
+                        }
+                        Button("Cancel", role: .cancel) {}
+                    } message: {
+                        Text("This will permanently delete your ResuMatch data (resume, preferences, saved jobs). To fully delete your Agnic account, visit pay.agnic.ai after signing out.")
                     }
                 } else {
                     // Sign-in button
@@ -144,6 +169,7 @@ struct BalancePill: View {
 
 struct AccountMenuButton: View {
     @EnvironmentObject var vm: AppViewModel
+    @State private var showDeleteConfirm = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -155,10 +181,27 @@ struct AccountMenuButton: View {
                 } label: {
                     Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
                 }
+                Button(role: .destructive) {
+                    showDeleteConfirm = true
+                } label: {
+                    Label("Delete Account", systemImage: "trash")
+                }
             } label: {
                 Image(systemName: "person.crop.circle.fill")
                     .foregroundStyle(.indigo)
             }
+        }
+        .confirmationDialog(
+            "Delete Account",
+            isPresented: $showDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete My Data", role: .destructive) {
+                Task { await vm.deleteAccount() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will permanently delete your ResuMatch data (resume, preferences, saved jobs). To fully delete your Agnic account, visit pay.agnic.ai after signing out.")
         }
     }
 }

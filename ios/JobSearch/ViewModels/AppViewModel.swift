@@ -389,4 +389,16 @@ final class AppViewModel: ObservableObject {
         phase = .onboarding
         persistState()
     }
+
+    func deleteAccount() async {
+        let key = apiKey
+        if !key.isEmpty {
+            try? await api.deleteSession(apiKey: key)
+        }
+        // Clear local persisted state
+        for key in [Keys.resume, Keys.preferences, Keys.savedJobs, Keys.dismissed, Keys.phase] {
+            defaults.removeObject(forKey: key)
+        }
+        auth.logout()
+    }
 }
