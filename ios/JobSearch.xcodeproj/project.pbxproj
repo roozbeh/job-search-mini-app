@@ -24,6 +24,7 @@
 		AA0000570000000000000000 /* ResumeGuidanceSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000400000000000000000 /* ResumeGuidanceSheet.swift */; };
 		AA0000580000000000000000 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000410000000000000000 /* ProfileView.swift */; };
 		AA0000590000000000000000 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA0000420000000000000000 /* Assets.xcassets */; };
+		AA0000600000000000000000 /* AppleAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000610000000000000000 /* AppleAuthService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +46,8 @@
 		AA0000400000000000000000 /* ResumeGuidanceSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResumeGuidanceSheet.swift; sourceTree = "<group>"; };
 		AA0000410000000000000000 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		AA0000420000000000000000 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AA0000610000000000000000 /* AppleAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleAuthService.swift; sourceTree = "<group>"; };
+		AA0000620000000000000000 /* JobSearch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = JobSearch.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,6 +82,7 @@
 			children = (
 				AA0000260000000000000000 /* JobSearchApp.swift */,
 				AA0000420000000000000000 /* Assets.xcassets */,
+				AA0000620000000000000000 /* JobSearch.entitlements */,
 				AA0000100000000000000000 /* Models */,
 				AA0000110000000000000000 /* Services */,
 				AA0000120000000000000000 /* ViewModels */,
@@ -99,6 +103,7 @@
 			isa = PBXGroup;
 			children = (
 				AA0000280000000000000000 /* APIService.swift */,
+				AA0000610000000000000000 /* AppleAuthService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -210,6 +215,11 @@
 				TargetAttributes = {
 					AA0000020000000000000000 = {
 						CreatedOnToolsVersion = 15.0;
+						SystemCapabilities = {
+							com.apple.Sign_In_with_Apple = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -263,6 +273,7 @@
 				AA0000560000000000000000 /* MatchScoreBadge.swift in Sources */,
 				AA0000570000000000000000 /* ResumeGuidanceSheet.swift in Sources */,
 				AA0000580000000000000000 /* ProfileView.swift in Sources */,
+				AA0000600000000000000000 /* AppleAuthService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -389,6 +400,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = JobSearch/JobSearch.entitlements;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;
@@ -422,6 +434,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = JobSearch/JobSearch.entitlements;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;

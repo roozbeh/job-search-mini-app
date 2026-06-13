@@ -1,3 +1,4 @@
+import AuthenticationServices
 import SwiftUI
 
 struct OnboardingView: View {
@@ -73,7 +74,25 @@ struct OnboardingView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 20)
 
-                // Sign in CTA
+                // Sign in with Apple (primary — required for App Store)
+                SignInWithAppleButton(.signIn) { request in
+                    request.requestedScopes = [.fullName, .email]
+                } onCompletion: { result in
+                    Task { await vm.signInWithApple(result: result) }
+                }
+                .signInWithAppleButtonStyle(.black)
+                .frame(height: 50)
+                .padding(.horizontal, 24)
+
+                // Divider
+                HStack {
+                    Rectangle().fill(Color.secondary.opacity(0.3)).frame(height: 1)
+                    Text("or").font(.caption).foregroundStyle(.secondary)
+                    Rectangle().fill(Color.secondary.opacity(0.3)).frame(height: 1)
+                }
+                .padding(.horizontal, 24)
+
+                // Sign in with Agnic (alternative — user-pays model)
                 Button {
                     Task { await vm.auth.login() }
                 } label: {
@@ -81,7 +100,7 @@ struct OnboardingView: View {
                         if vm.auth.isLoggingIn {
                             ProgressView().tint(.white)
                         } else {
-                            Image(systemName: "person.crop.circle.badge.checkmark")
+                            Image(systemName: "wallet.bifold.fill")
                         }
                         Text(vm.auth.isLoggingIn ? "Signing in…" : "Sign in with Agnic")
                             .fontWeight(.semibold)
@@ -91,10 +110,11 @@ struct OnboardingView: View {
                     .background(Color.indigo, in: RoundedRectangle(cornerRadius: 16))
                     .foregroundStyle(.white)
                 }
-                .disabled(vm.auth.isLoggingIn)
+                .disabled(vm.auth.isLoggingIn || vm.appleAuth.isLoggingIn)
                 .padding(.horizontal, 24)
 
-                if let err = vm.auth.loginError {
+                let loginError = vm.auth.loginError ?? vm.appleAuth.loginError
+                if let err = loginError {
                     Text(err)
                         .font(.caption)
                         .foregroundStyle(.red)

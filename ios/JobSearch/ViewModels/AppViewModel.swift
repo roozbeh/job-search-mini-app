@@ -1,5 +1,6 @@
-import Foundation
+import AuthenticationServices
 import Combine
+import Foundation
 
 // MARK: - AppViewModel
 
@@ -29,10 +30,14 @@ final class AppViewModel: ObservableObject {
 
     // Auth
     let auth = AgnicAuthService.shared
+    let appleAuth = AppleAuthService.shared
     @Published var showLoginSheet = false
 
-    // Settings
-    var apiKey: String { auth.accessToken ?? "" }
+    /// API key for LLM calls — empty for Apple users (server uses server-side keys).
+    var apiKey: String { appleAuth.isLoggedIn ? "" : auth.accessToken ?? "" }
+
+    /// Stable key for session storage — Apple user ID or Agnic token.
+    var sessionApiKey: String { appleAuth.isLoggedIn ? appleAuth.sessionKey : auth.accessToken ?? "" }
     @Published var backendURL: String = "https://jobsearch.ipronto.net" {
         didSet { reconfigureService() }
     }
@@ -51,7 +56,7 @@ final class AppViewModel: ObservableObject {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.reconfigureService() }
             .store(in: &cancellables)
-        // Track login state changes
+        // Track Agnic login state
         auth.$isLoggedIn
             .receive(on: RunLoop.main)
             .removeDuplicates()
@@ -59,8 +64,19 @@ final class AppViewModel: ObservableObject {
                 guard let self else { return }
                 if loggedIn {
                     Task { await self.loadSessionFromServer() }
-                } else {
-                    // Token expired or user signed out — always return to sign-in
+                } else if !appleAuth.isLoggedIn {
+                    self.phase = .onboarding
+                    self.defaults.set(AppPhase.onboarding.rawValue, forKey: Keys.phase)
+                }
+            }
+            .store(in: &cancellables)
+        // Track Apple login state
+        appleAuth.$isLoggedIn
+            .receive(on: RunLoop.main)
+            .removeDuplicates()
+            .sink { [weak self] loggedIn in
+                guard let self else { return }
+                if !loggedIn && !auth.isLoggedIn {
                     self.phase = .onboarding
                     self.defaults.set(AppPhase.onboarding.rawValue, forKey: Keys.phase)
                 }
@@ -68,7 +84,8 @@ final class AppViewModel: ObservableObject {
             .store(in: &cancellables)
         Task {
             await auth.validateStoredToken()
-            if auth.isLoggedIn { await loadSessionFromServer() }
+            await appleAuth.validateCredential()
+            if auth.isLoggedIn || appleAuth.isLoggedIn { await loadSessionFromServer() }
         }
     }
 
@@ -283,8 +300,24 @@ final class AppViewModel: ObservableObject {
         static let backendURL  = "app.backendURL"
     }
 
+    // MARK: - Apple Sign-in
+
+    func signInWithApple(result: Result<ASAuthorization, Error>) async {
+        switch result {
+        case .success(let auth):
+            guard let credential = auth.credential as? ASAuthorizationAppleIDCredential else { return }
+            appleAuth.userId = credential.user
+            UserDefaults.standard.set(credential.user, forKey: "apple_user_id")
+            appleAuth.isLoggedIn = true
+            reconfigureService()
+            await loadSessionFromServer()
+        case .failure:
+            appleAuth.loginError = "Sign in failed. Please try again."
+        }
+    }
+
     private func reconfigureService() {
-        Task { await api.configure(backendURL: backendURL, apiKey: auth.accessToken ?? "") }
+        Task { await api.configure(backendURL: backendURL, apiKey: apiKey) }
     }
 
     private func persistState() {
@@ -295,9 +328,9 @@ final class AppViewModel: ObservableObject {
         if let d = try? encoder.encode(dismissedJobIds) { defaults.set(d, forKey: Keys.dismissed) }
         defaults.set(phase.rawValue, forKey: Keys.phase)
 
-        guard !apiKey.isEmpty else { return }
+        let key = sessionApiKey
+        guard !key.isEmpty else { return }
         let snapshot = buildSession()
-        let key = apiKey
         Task { try? await api.saveSession(snapshot, apiKey: key) }
     }
 
@@ -314,7 +347,7 @@ final class AppViewModel: ObservableObject {
     }
 
     private func loadSessionFromServer() async {
-        let key = apiKey
+        let key = sessionApiKey
         guard !key.isEmpty else { return }
         do {
             if let session = try await api.loadSession(apiKey: key) {
@@ -391,14 +424,11 @@ final class AppViewModel: ObservableObject {
     }
 
     func deleteAccount() async {
-        let key = apiKey
-        if !key.isEmpty {
-            try? await api.deleteSession(apiKey: key)
+        let key = sessionApiKey
+        if !key.isEmpty { try? await api.deleteSession(apiKey: key) }
+        for k in [Keys.resume, Keys.preferences, Keys.savedJobs, Keys.dismissed, Keys.phase] {
+            defaults.removeObject(forKey: k)
         }
-        // Clear local persisted state
-        for key in [Keys.resume, Keys.preferences, Keys.savedJobs, Keys.dismissed, Keys.phase] {
-            defaults.removeObject(forKey: key)
-        }
-        auth.logout()
+        if appleAuth.isLoggedIn { appleAuth.logout() } else { auth.logout() }
     }
 }
