@@ -91,22 +91,38 @@ Location: `/etc/apache2/sites-available/jobsearch.ipronto.net.conf`
 - Cert path: `/home/ubuntu/.acme.sh/jobsearch.ipronto.net_ecc/`
 
 ### Server .env File
-Must exist at `/home/ubuntu/job-search-mini-app/backend/.env`:
+Must exist at `/home/ubuntu/job-search-mini-app/backend/.env`.
+See `backend/.env.example` for full template. Key vars:
 ```
 MONGODB_URL=mongodb+srv://...@cluster.mongodb.net/
 MONGODB_DB=jobsearch
-AGNICPAY_API_KEY=      ← OPTIONAL server-side fallback key (currently not set)
-AGNIC_LLM_BASE=https://api.agnic.ai/v1
-AGNIC_JOB_SEARCH_BASE=https://api.agnic.ai/v1/custom/job-search
-AGNIC_FETCH_PROXY=https://api.agnic.ai/api/x402/fetch
 PORT=8000
 
-# Job search provider (switchable without code changes)
-JOB_SEARCH_PROVIDER=serpapi   ← currently active provider
-SERPAPI_KEY=<user must set>   ← required when JOB_SEARCH_PROVIDER=serpapi
+# Job search
+JOB_SEARCH_PROVIDER=serpapi
+SERPAPI_KEY=<set on server — 250 free/month>
+AGNIC_JOB_SEARCH_BASE=https://api.agnic.ai/v1/custom/job-search
+AGNIC_FETCH_PROXY=https://api.agnic.ai/api/x402/fetch
+
+# LLM roles (leave KEY empty → user's Agnic token used; set KEY for Apple Sign-in)
+RESUME_ANALYSIS_MODEL=openai/gpt-4o
+RESUME_ANALYSIS_KEY=
+RESUME_ANALYSIS_URL=https://api.agnic.ai/v1
+
+TITLE_EXPANSION_MODEL_A=openai/gpt-5
+TITLE_EXPANSION_MODEL_B=anthropic/claude-sonnet-4
+TITLE_EXPANSION_KEY=
+TITLE_EXPANSION_URL=https://api.agnic.ai/v1
+
+MATCH_SCORE_MODEL=openai/gpt-4o-mini
+MATCH_SCORE_KEY=
+MATCH_SCORE_URL=https://api.agnic.ai/v1
+
+AGNICPAY_API_KEY=   ← last-resort fallback, leave empty
 ```
-> The app runs in **user-pays mode**: each user's Agnic OAuth token is the API key. `AGNICPAY_API_KEY` is optional as a server-side fallback but is currently empty on the server.
-> **Job search is server-pays**: SerpAPI key is a server-side key, not per-user. Free tier = 250 searches/month.
+> **Key resolution per role:** `user Agnic token → role KEY → AGNICPAY_API_KEY`
+> Agnic users: their OAuth token used automatically. Apple users: role KEY required.
+> **Job search is server-pays**: SerpAPI key is server-side. Free tier = 250 searches/month.
 
 ---
 
@@ -132,6 +148,35 @@ bash deploy.sh web    # build + deploy frontend only
 ```
 
 > **IMPORTANT**: The server deploys via `git pull`, so backend/frontend changes **must be committed and pushed** before running `deploy.sh`. Uncommitted local changes will NOT reach the server.
+
+---
+
+## LLM Architecture
+
+Three distinct roles, each with independent model/key/url config in `.env`:
+
+| Role | Model (default) | Called | Purpose |
+|------|----------------|--------|---------|
+| **Resume Analysis** | `openai/gpt-4o` | Once per upload | Deep CV analysis + ATS scoring |
+| **Title Expansion** | `openai/gpt-5` + `anthropic/claude-sonnet-4` | Once per search | Generate 15 creative job titles per model in parallel, merge ~25 unique |
+| **Match Score** | `openai/gpt-4o-mini` | Per job card (high volume) | Score resume vs job description |
+
+**Key resolution (all roles):** `user Agnic OAuth token → role server key → AGNICPAY_API_KEY`
+- Agnic users: always use their token (user-pays)
+- Apple Sign-in users: no token → role server keys required in `.env`
+
+**Title expansion detail:** Both models (`gpt-5` + `claude-sonnet-4`) fire in parallel via `asyncio.gather`. Results merged/deduped into ~25 titles. Batched into 2 extra SerpAPI queries alongside original → ~3× more diverse job results. Graceful fallback if either model fails.
+
+**Match score:** Currently client-side in iOS (`APIService.computeMatchScore` → direct Agnic call). Needs server-side endpoint (`POST /api/jobs/score`) for Apple users — not yet built.
+
+**Agnic model format:** `provider/model` e.g. `openai/gpt-5`, `anthropic/claude-sonnet-4`, `google/gemini-2.5-flash`. All confirmed working via `https://api.agnic.ai/v1`.
+
+**Future match score swap:** Gemini free tier (1500 req/day):
+```
+MATCH_SCORE_MODEL=gemini-2.0-flash
+MATCH_SCORE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+MATCH_SCORE_KEY=<google ai studio key>
+```
 
 ---
 
