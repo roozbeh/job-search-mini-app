@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 _CACHE_TTL_HOURS = 6
-_EXPAND_MODELS = ["openai/gpt-5", "anthropic/claude-sonnet-4"]
 _EXPAND_BATCH_SIZE = 6   # titles per extra search query
 _EXPAND_BATCH_COUNT = 2  # max extra queries (2 × 6 = 12 expanded titles searched)
 
@@ -112,18 +111,24 @@ async def _set_cached(query: str, jobs: list[dict]) -> None:
 
 # ── LLM title expansion ───────────────────────────────────────────────────────
 
+def _resolve_expansion_key(user_key: str) -> tuple[str, str]:
+    """Return (key, url) for title expansion. Server key takes priority."""
+    key = settings.title_expansion_key or user_key or settings.agnicpay_api_key
+    return key, settings.title_expansion_url
+
+
 async def _llm_expand_titles(
     resume_text: str,
     existing_titles: list[str],
     model: str,
     api_key: str,
+    base_url: str,
 ) -> list[str]:
     """Ask one LLM model for creative job title suggestions based on the resume."""
-    key = api_key or settings.agnicpay_api_key
-    if not key:
+    if not api_key:
         return []
     existing_str = ", ".join(existing_titles) if existing_titles else "none"
-    client = AsyncOpenAI(api_key=key, base_url=settings.agnic_llm_base)
+    client = AsyncOpenAI(api_key=api_key, base_url=base_url)
     try:
         resp = await client.chat.completions.create(
             model=model,
@@ -168,9 +173,11 @@ async def _expand_job_titles(
     existing_titles: list[str],
     api_key: str,
 ) -> list[str]:
-    """Run GPT-5 and Claude Sonnet 4 in parallel; merge and dedup results."""
+    """Run title_expansion_model_a and _b in parallel; merge and dedup results."""
+    key, url = _resolve_expansion_key(api_key)
+    models = [settings.title_expansion_model_a, settings.title_expansion_model_b]
     results = await asyncio.gather(
-        *[_llm_expand_titles(resume_text, existing_titles, m, api_key) for m in _EXPAND_MODELS],
+        *[_llm_expand_titles(resume_text, existing_titles, m, key, url) for m in models],
         return_exceptions=True,
     )
     seen = {t.lower() for t in existing_titles}
@@ -185,7 +192,7 @@ async def _expand_job_titles(
                 merged.append(title)
     logger.info(
         "_expand_job_titles: models=%s counts=%s merged=%d",
-        _EXPAND_MODELS,
+        models,
         [len(r) if not isinstance(r, Exception) else 0 for r in results],
         len(merged),
     )

@@ -23,11 +23,17 @@ class AnalyzeRequest(BaseModel):
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
-def _openai_client(api_key: str) -> AsyncOpenAI:
-    key = api_key or settings.agnicpay_api_key
-    if not key:
+def _openai_client(api_key: str, base_url: str) -> AsyncOpenAI:
+    if not api_key:
         raise HTTPException(status_code=500, detail="No API key configured on server")
-    return AsyncOpenAI(api_key=key, base_url=settings.agnic_llm_base)
+    return AsyncOpenAI(api_key=api_key, base_url=base_url)
+
+
+def _resolve_analysis_key(user_key: str) -> tuple[str, str]:
+    """Return (key, url) for resume analysis. Server key takes priority."""
+    key = settings.resume_analysis_key or user_key or settings.agnicpay_api_key
+    url = settings.resume_analysis_url
+    return key, url
 
 
 def _raise_ai_error(exc: Exception) -> None:
@@ -37,11 +43,12 @@ def _raise_ai_error(exc: Exception) -> None:
     raise HTTPException(status_code=502, detail=f"AI call failed: {exc}")
 
 
-async def _chat_json(api_key: str, system: str, user: str) -> dict:
-    client = _openai_client(api_key)
-    logger.info("Calling AI API at base_url=%s model=openai/gpt-4o", settings.agnic_llm_base)
+async def _chat_json(api_key: str, base_url: str, system: str, user: str) -> dict:
+    client = _openai_client(api_key, base_url)
+    model = settings.resume_analysis_model
+    logger.info("resume_analysis model=%s url=%s", model, base_url)
     resp = await client.chat.completions.create(
-        model="openai/gpt-4o",
+        model=model,
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": user},
@@ -112,9 +119,10 @@ Analyze the provided CV and return a JSON object with exactly this structure:
 
 Provide 3-5 distinct improvement suggestions prioritising high-impact issues."""
 
+    key, url = _resolve_analysis_key(body.apiKey)
     try:
         data = await _chat_json(
-            body.apiKey,
+            key, url,
             system,
             f"Please analyse this CV:\n\n{body.cvText}",
         )
@@ -159,9 +167,10 @@ Return a JSON object with exactly this structure:
 
 Score breakdown maximums: parseability 25, keywordAlignment 30, formattingSimplicity 15, sectionCompleteness 15, roleSignalStrength 15."""
 
+    key, url = _resolve_analysis_key(body.apiKey)
     try:
         data = await _chat_json(
-            body.apiKey,
+            key, url,
             system,
             f"Please perform a detailed review and ATS evaluation for this CV:\n\n{body.cvText}",
         )
