@@ -227,6 +227,10 @@ actor APIService {
     private(set) var backendBaseURL: String = "https://jobsearch.ipronto.net"
     private(set) var apiKey: String = ""
 
+    /// Server-side Agnic key used for match scoring when user has no Agnic token (Apple Sign-in).
+    /// ⚠️ Embedded in binary — rotate if compromised. Funds server's Agnic balance.
+    static let serverMatchKey = "REPLACE_WITH_YOUR_AGNIC_TOK"
+
     /// Update the backend URL at runtime (e.g. from Settings screen)
     func configure(backendURL: String, apiKey: String) {
         self.backendBaseURL = backendURL
@@ -329,7 +333,10 @@ actor APIService {
     /// This is called on-demand (when user swipes to a card or opens job detail) to avoid
     /// burning API quota on jobs the candidate never sees.
     func computeMatchScore(resumeText: String, job: Job) async throws -> MatchGuidance {
-        guard !apiKey.isEmpty else { throw APIError.missingAPIKey }
+        let effectiveKey = apiKey.isEmpty ? APIService.serverMatchKey : apiKey
+        guard !effectiveKey.isEmpty, effectiveKey != "REPLACE_WITH_YOUR_AGNIC_TOK" else {
+            throw APIError.missingAPIKey
+        }
         guard let description = job.description, !description.isEmpty else {
             // No job description — return a placeholder
             return MatchGuidance(
@@ -389,7 +396,7 @@ actor APIService {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(effectiveKey)", forHTTPHeaderField: "Authorization")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, httpResponse) = try await URLSession.shared.data(for: request)
