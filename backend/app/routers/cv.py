@@ -30,8 +30,8 @@ def _openai_client(api_key: str, base_url: str) -> AsyncOpenAI:
 
 
 def _resolve_analysis_key(user_key: str) -> tuple[str, str]:
-    """Return (key, url) for resume analysis. Server key takes priority."""
-    key = settings.resume_analysis_key or user_key or settings.agnicpay_api_key
+    """Return (key, url) for resume analysis. User token wins (Agnic); server key is Apple fallback."""
+    key = user_key or settings.resume_analysis_key or settings.agnicpay_api_key
     url = settings.resume_analysis_url
     return key, url
 

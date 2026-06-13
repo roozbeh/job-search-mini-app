@@ -112,8 +112,8 @@ async def _set_cached(query: str, jobs: list[dict]) -> None:
 # ── LLM title expansion ───────────────────────────────────────────────────────
 
 def _resolve_expansion_key(user_key: str) -> tuple[str, str]:
-    """Return (key, url) for title expansion. Server key takes priority."""
-    key = settings.title_expansion_key or user_key or settings.agnicpay_api_key
+    """Return (key, url) for title expansion. User token wins (Agnic); server key is Apple fallback."""
+    key = user_key or settings.title_expansion_key or settings.agnicpay_api_key
     return key, settings.title_expansion_url
 
 
